@@ -8,7 +8,6 @@ class UserPreferences extends ChangeNotifier {
     _load();
   }
 
-  static const _kThemeMode = 'pref_theme_mode';
   static const _kBikeCc = 'pref_bike_cc';
   static const _kFavorites = 'pref_favorites';
   static const _kRecent = 'pref_recent';
@@ -16,25 +15,15 @@ class UserPreferences extends ChangeNotifier {
 
   final SharedPreferences _prefs;
 
-  ThemeMode _themeMode = ThemeMode.system;
   int? _bikeDisplacementCc; // null = 未設定
   final List<String> _favorites = [];
   final List<String> _recent = []; // 先頭が最新
 
-  ThemeMode get themeMode => _themeMode;
   int? get bikeDisplacementCc => _bikeDisplacementCc;
   List<String> get favorites => List.unmodifiable(_favorites);
   List<String> get recent => List.unmodifiable(_recent);
 
   void _load() {
-    switch (_prefs.getString(_kThemeMode)) {
-      case 'light':
-        _themeMode = ThemeMode.light;
-      case 'dark':
-        _themeMode = ThemeMode.dark;
-      default:
-        _themeMode = ThemeMode.system;
-    }
     final cc = _prefs.getInt(_kBikeCc);
     _bikeDisplacementCc = (cc == null || cc <= 0) ? null : cc;
     _favorites
@@ -43,14 +32,6 @@ class UserPreferences extends ChangeNotifier {
     _recent
       ..clear()
       ..addAll(_prefs.getStringList(_kRecent) ?? const []);
-  }
-
-  // ── テーマ ──
-  Future<void> setThemeMode(ThemeMode mode) async {
-    if (_themeMode == mode) return;
-    _themeMode = mode;
-    await _prefs.setString(_kThemeMode, mode.name);
-    notifyListeners();
   }
 
   // ── マイバイク排気量 ──

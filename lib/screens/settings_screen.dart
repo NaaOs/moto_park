@@ -19,22 +19,6 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionLabel('表示テーマ'),
-          SegmentedButton<ThemeMode>(
-            segments: const [
-              ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto), label: Text('自動')),
-              ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode), label: Text('ライト')),
-              ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode), label: Text('ダーク')),
-            ],
-            selected: {prefs.themeMode},
-            onSelectionChanged: (s) => prefs.setThemeMode(s.first),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '「自動」は端末の設定に従います。',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
-          const SizedBox(height: 28),
           _SectionLabel('マイバイク(排気量)'),
           const Text(
             '登録すると、その排気量で停められない駐輪場を地図から自動で除外します。',

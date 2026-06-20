@@ -28,15 +28,11 @@ class MotoParkApp extends StatelessWidget {
         Provider<JmpsaDataset>(create: (_) => JmpsaDataset()),
         ChangeNotifierProvider<UserPreferences>(create: (_) => UserPreferences(prefs)),
       ],
-      child: Consumer<UserPreferences>(
-        builder: (context, prefs, _) => MaterialApp(
-          title: 'MotoPark',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: prefs.themeMode,
-          debugShowCheckedModeBanner: false,
-          home: const MapScreen(),
-        ),
+      child: MaterialApp(
+        title: 'MotoPark',
+        theme: AppTheme.light,
+        debugShowCheckedModeBanner: false,
+        home: const MapScreen(),
       ),
     );
   }
