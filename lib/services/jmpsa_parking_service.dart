@@ -128,9 +128,10 @@ class JmpsaParkingService {
     }
 
     // 写真URLを重複排除しつつ絶対URL化する。
+    // Web(CanvasKit)はクロスオリジン画像にもCORSが必要なため、Web時はプロキシ経由にする。
     final photos = <String>[];
     for (final m in _photoPattern.allMatches(html)) {
-      final abs = '$_baseUrl${m.group(0)}';
+      final abs = _proxied('$_baseUrl${m.group(0)}');
       if (!photos.contains(abs)) photos.add(abs);
     }
 
