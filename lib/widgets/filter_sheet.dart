@@ -91,6 +91,29 @@ class _FilterSheetState extends State<FilterSheet> {
               }).toList(),
             ),
             const SizedBox(height: 20),
+            _SectionLabel('予約の要否'),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                (label: '指定なし', value: null),
+                (label: '予約不要のみ', value: false),
+                (label: '予約制のみ', value: true),
+              ].map((opt) {
+                final selected = _filter.requiresReservation == opt.value;
+                return ChoiceChip(
+                  label: Text(opt.label),
+                  selected: selected,
+                  onSelected: (_) => setState(() {
+                    _filter = _filter.copyWith(
+                      requiresReservation: opt.value,
+                      clearRequiresReservation: opt.value == null,
+                    );
+                  }),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
             _SectionLabel('その他の条件'),
             _BigSwitchTile(
               icon: Icons.roofing,

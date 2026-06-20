@@ -256,66 +256,79 @@ class _MapScreenState extends State<MapScreen> {
 
           return Stack(
             children: [
+              // 地図は画面全体に表示し、操作UIだけ SafeArea 内に収める(ノッチ対応)。
               _useDesktopMap ? _buildFlutterMap(spots) : _buildGoogleMap(spots),
-              Positioned(
-                top: 12,
-                left: 12,
-                right: 12,
-                child: _TopBar(
-                  visibleCount: spots.length,
-                  totalCount: resolved.total,
-                  filterActive: _filter.isActive,
-                  filterCount: _filter.activeCount,
-                  onTapFilter: _openFilter,
-                ),
-              ),
-              if (tooFarOut)
-                const Positioned(
-                  top: 70,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _HintPill(text: '地図を拡大すると駐輪場が表示されます'),
+              Positioned.fill(
+                child: SafeArea(
+                  minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        right: 8,
+                        child: _TopBar(
+                          visibleCount: spots.length,
+                          totalCount: resolved.total,
+                          filterActive: _filter.isActive,
+                          filterCount: _filter.activeCount,
+                          onTapFilter: _openFilter,
+                        ),
+                      ),
+                      if (tooFarOut)
+                        const Positioned(
+                          top: 70,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: _HintPill(text: '地図を拡大すると駐輪場が表示されます'),
+                          ),
+                        ),
+                      if (snapshot.connectionState == ConnectionState.waiting)
+                        const Positioned(
+                          bottom: 110,
+                          left: 0,
+                          right: 0,
+                          child: Center(child: _LoadingPill(text: '駐輪場情報を読み込み中…')),
+                        ),
+                      if (_loadingJmpsa)
+                        const Positioned(
+                          bottom: 110,
+                          left: 0,
+                          right: 0,
+                          child: Center(child: _LoadingPill(text: 'JMPSAから最新情報を取得中…')),
+                        ),
+                      Positioned(
+                        bottom: 16,
+                        right: 8,
+                        child: Column(
+                          children: [
+                            _BigFab(
+                              icon: Icons.my_location,
+                              tooltip: '現在地',
+                              onPressed: _focusOnMyLocation,
+                            ),
+                            const SizedBox(height: 14),
+                            _BigFab(
+                              icon: Icons.add_location_alt,
+                              tooltip: '駐輪場を登録(地図長押しでも可)',
+                              color: AppTheme.accent,
+                              onPressed: () => _onMapLongPress(_currentLocation ?? _defaultCenter),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 出典表示。FAB(右下)と重ならないよう右側に余白を確保し、
+                      // 狭い画面では省略表示にする。
+                      const Positioned(
+                        left: 8,
+                        right: 92,
+                        bottom: 16,
+                        child: _HintPill(text: '出典: JMPSA(日本二輪車普及安全協会)'),
+                      ),
+                    ],
                   ),
                 ),
-              if (snapshot.connectionState == ConnectionState.waiting)
-                const Positioned(
-                  bottom: 110,
-                  left: 0,
-                  right: 0,
-                  child: Center(child: _LoadingPill(text: '駐輪場情報を読み込み中…')),
-                ),
-              if (_loadingJmpsa)
-                const Positioned(
-                  bottom: 110,
-                  left: 0,
-                  right: 0,
-                  child: Center(child: _LoadingPill(text: 'JMPSAから最新情報を取得中…')),
-                ),
-              Positioned(
-                bottom: 24,
-                right: 16,
-                child: Column(
-                  children: [
-                    _BigFab(
-                      icon: Icons.my_location,
-                      tooltip: '現在地',
-                      onPressed: _focusOnMyLocation,
-                    ),
-                    const SizedBox(height: 14),
-                    _BigFab(
-                      icon: Icons.add_location_alt,
-                      tooltip: '駐輪場を登録(地図長押しでも可)',
-                      color: AppTheme.accent,
-                      onPressed: () => _onMapLongPress(_currentLocation ?? _defaultCenter),
-                    ),
-                  ],
-                ),
-              ),
-              const Positioned(
-                left: 12,
-                bottom: 24,
-                child: _HintPill(text: 'データ出典: JMPSA(日本二輪車普及安全協会) 時間貸し駐輪場'),
               ),
             ],
           );
@@ -524,7 +537,12 @@ class _HintPill extends StatelessWidget {
         color: AppTheme.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 13, color: Colors.black54),
+      ),
     );
   }
 }

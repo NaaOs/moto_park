@@ -104,6 +104,10 @@ class ParkingSpot {
     this.createdAt,
   });
 
+  /// 予約が必要かどうか。JMPSAデータでは予約制の施設名が「【予約制：◯◯】」で
+  /// 始まるため、名称から判定する(akippa・特P・いつでもニリーン等)。
+  bool get requiresReservation => name.contains('予約制');
+
   factory ParkingSpot.fromJson(Map<String, dynamic> json) {
     return ParkingSpot(
       id: json['id'] as String,
