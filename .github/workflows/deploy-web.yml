@@ -1,0 +1,51 @@
+# Flutter Web を GitHub Pages へ自動デプロイするワークフロー。
+# main にプッシュするたびにビルドして公開する(完全無料)。
+#
+# ▼ 事前にやること(GitHub の画面で1回だけ):
+#   リポジトリ → Settings → Pages → Build and deployment の Source を
+#   「GitHub Actions」に設定する。
+#
+# ▼ 公開URL: https://<ユーザー名>.github.io/<リポジトリ名>/
+#   下の --base-href は「/<リポジトリ名>/」に合わせること(既定は /moto-park/)。
+
+name: Deploy Web to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行を1つに制限(古いデプロイをキャンセル)。
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      # base-href はリポジトリ名に合わせる(例: リポジトリが moto-park なら /moto-park/)。
+      - run: flutter build web --release --base-href /moto-park/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
