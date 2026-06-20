@@ -70,12 +70,11 @@ dev_dependencies:
   # 生成コマンド: dart run flutter_launcher_icons
   flutter_launcher_icons: ^0.14.4
 
-# アイコン生成の設定(flutter_launcher_icons)
+# アイコン生成の設定(flutter_launcher_icons)。対応は Web / Windows のみ。
 flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
-  android: true
-  ios: true
-  remove_alpha_ios: true
+  android: false
+  ios: false
   web:
     generate: true
     image_path: "assets/icon/app_icon.png"

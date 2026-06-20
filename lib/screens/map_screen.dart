@@ -21,7 +21,7 @@ import 'spot_detail_screen.dart';
 
 /// メイン画面: 駐輪場ピンの地図表示・絞り込み・現在地・新規登録の起点。
 /// Windows/Linux/macOS では flutter_map(OpenStreetMap) を使用し、
-/// Android/iOS/Web では google_maps_flutter を使用する。
+/// Web では google_maps_flutter を使用する。
 ///
 /// 全国JMPSAデータ(4〜5万件)を同梱しているため、地図には「表示領域内」かつ
 /// 「一定ズーム以上」のマーカーのみを描画し、最大件数で打ち切ることで
@@ -41,7 +41,7 @@ class _MapScreenState extends State<MapScreen> {
   // このズーム未満ではマーカーを一切描画しない(拡大したときのみピンを表示する)。
   static const _datasetMinZoom = 13.0;
 
-  // Google Maps コントローラ (Android / iOS / Web)
+  // Google Maps コントローラ (Web)
   GoogleMapController? _googleMapController;
   // flutter_map コントローラ (Windows / Linux / macOS)
   final _flutterMapController = fmap.MapController();
@@ -343,7 +343,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // ── Google Maps (Android / iOS / Web) ─────────────────────────────────────
+  // ── Google Maps (Web) ─────────────────────────────────────────────────────
 
   Widget _buildGoogleMap(List<ParkingSpot> spots) {
     return GoogleMap(
