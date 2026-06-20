@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../models/parking_spot.dart';
@@ -28,8 +29,21 @@ class JmpsaSpotDetail {
 class JmpsaParkingService {
   static const _baseUrl = 'https://www.jmpsa.or.jp';
 
+  // Web公開時のCORS回避用プロキシ(Cloudflare Worker)のベースURL。
+  // ビルド時に --dart-define=JMPSA_PROXY=https://...workers.dev で注入する。
+  // 空の場合(デスクトップ/モバイル/開発)は直接アクセスする。
+  static const _proxyBase = String.fromEnvironment('JMPSA_PROXY');
+
   // 時間貸し(types=1)のみを対象とする。
   static const _typesHourly = '1';
+
+  /// Web かつプロキシ設定済みのときだけ、JMPSAへのリクエストをプロキシ経由にする。
+  /// 画像表示(Image.network)はブラウザの<img>で直接読めるため対象外。
+  static String _proxied(String url) {
+    if (!kIsWeb || _proxyBase.isEmpty) return url;
+    if (url.startsWith(_baseUrl)) return '$_proxyBase${url.substring(_baseUrl.length)}';
+    return url;
+  }
 
   static final _itemPattern = RegExp(
     r'<li class="p-parking-prefecture-list-item">(.*?)</li>',
@@ -74,7 +88,8 @@ class JmpsaParkingService {
 
     try {
       final response = await http
-          .get(uri, headers: const {'User-Agent': 'Mozilla/5.0 (MotoParkApp)'})
+          .get(Uri.parse(_proxied(uri.toString())),
+              headers: const {'User-Agent': 'Mozilla/5.0 (MotoParkApp)'})
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       // Content-Type が不正(末尾;)なエンドポイント対策で bodyBytes を直接デコードする。
@@ -87,7 +102,7 @@ class JmpsaParkingService {
   /// 駐車場の詳細ページ(infoUrl)から備考・予約URL・写真を取得する。
   /// 詳細画面を開いたときに遅延取得する用途。失敗時は null を返す。
   Future<JmpsaSpotDetail?> fetchDetail(String url) async {
-    final uri = Uri.tryParse(url);
+    final uri = Uri.tryParse(_proxied(url));
     if (uri == null) return null;
     try {
       final response = await http

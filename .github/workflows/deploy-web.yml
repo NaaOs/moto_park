@@ -35,7 +35,11 @@ jobs:
           channel: stable
       - run: flutter pub get
       # base-href はリポジトリ名に合わせる(例: リポジトリが moto-park なら /moto-park/)。
-      - run: flutter build web --release --base-href /moto_park/
+      # JMPSA_PROXY に Cloudflare Worker のURLを入れると、公開Web版でも
+      # ライブ取得・詳細取得(備考/予約URL)が動く。空のままだと同梱データのみ。
+      - run: >
+          flutter build web --release --base-href /moto_park/
+          --dart-define=JMPSA_PROXY=https://motopark-proxy.YOUR-SUBDOMAIN.workers.dev
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
