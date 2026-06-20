@@ -41,119 +41,137 @@ class _FilterSheetState extends State<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // 画面の高さに収めつつ、条件部分はスクロール・操作ボタンは下部固定にする。
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.tune, size: 28),
-                const SizedBox(width: 10),
-                Text('詳細条件で絞り込み', style: Theme.of(context).textTheme.titleLarge),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _SectionLabel('排気量'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _ccOptions.map((cc) {
-                final selected = _filter.minDisplacementCc == (cc == 0 ? null : cc);
-                return ChoiceChip(
-                  label: Text(cc == 0 ? '指定なし' : '$cc cc以上可'),
-                  selected: selected,
-                  onSelected: (_) => setState(() {
-                    _filter = _filter.copyWith(
-                      minDisplacementCc: cc == 0 ? null : cc,
-                      clearMinDisplacementCc: cc == 0,
-                    );
-                  }),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            _SectionLabel('路面状況(土・砂利は転倒リスクあり)'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [null, GroundSurface.asphalt, GroundSurface.gravel, GroundSurface.soil].map((s) {
-                final selected = _filter.surface == s;
-                return ChoiceChip(
-                  label: Text(s == null ? '指定なし' : _surfaceLabel(s)),
-                  selected: selected,
-                  onSelected: (_) => setState(() {
-                    _filter = _filter.copyWith(surface: s, clearSurface: s == null);
-                  }),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            _SectionLabel('予約の要否'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                (label: '指定なし', value: null),
-                (label: '予約不要のみ', value: false),
-                (label: '予約制のみ', value: true),
-              ].map((opt) {
-                final selected = _filter.requiresReservation == opt.value;
-                return ChoiceChip(
-                  label: Text(opt.label),
-                  selected: selected,
-                  onSelected: (_) => setState(() {
-                    _filter = _filter.copyWith(
-                      requiresReservation: opt.value,
-                      clearRequiresReservation: opt.value == null,
-                    );
-                  }),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            _SectionLabel('その他の条件'),
-            _BigSwitchTile(
-              icon: Icons.roofing,
-              label: '屋根あり',
-              value: _filter.roofedOnly,
-              onChanged: (v) => setState(() => _filter = _filter.copyWith(roofedOnly: v)),
-            ),
-            _BigSwitchTile(
-              icon: Icons.lock_outline,
-              label: '地球ロック(固定物への施錠)可',
-              value: _filter.groundLockableOnly,
-              onChanged: (v) => setState(() => _filter = _filter.copyWith(groundLockableOnly: v)),
-            ),
-            _BigSwitchTile(
-              icon: Icons.horizontal_rule,
-              label: '傾斜なし',
-              value: _filter.flatOnly,
-              onChanged: (v) => setState(() => _filter = _filter.copyWith(flatOnly: v)),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-                    onPressed: () => setState(() => _filter = const SpotFilter()),
-                    child: const Text('条件をリセット'),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.tune, size: 28),
+                  const SizedBox(width: 10),
+                  Text('詳細条件で絞り込み', style: Theme.of(context).textTheme.titleLarge),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // ── スクロール可能な条件エリア ──
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionLabel('排気量'),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: _ccOptions.map((cc) {
+                          final selected = _filter.minDisplacementCc == (cc == 0 ? null : cc);
+                          return ChoiceChip(
+                            label: Text(cc == 0 ? '指定なし' : '$cc cc以上可'),
+                            selected: selected,
+                            onSelected: (_) => setState(() {
+                              _filter = _filter.copyWith(
+                                minDisplacementCc: cc == 0 ? null : cc,
+                                clearMinDisplacementCc: cc == 0,
+                              );
+                            }),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+                      _SectionLabel('路面状況(土・砂利は転倒リスクあり)'),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [null, GroundSurface.asphalt, GroundSurface.gravel, GroundSurface.soil].map((s) {
+                          final selected = _filter.surface == s;
+                          return ChoiceChip(
+                            label: Text(s == null ? '指定なし' : _surfaceLabel(s)),
+                            selected: selected,
+                            onSelected: (_) => setState(() {
+                              _filter = _filter.copyWith(surface: s, clearSurface: s == null);
+                            }),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+                      _SectionLabel('予約の要否'),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          (label: '指定なし', value: null),
+                          (label: '予約不要のみ', value: false),
+                          (label: '予約制のみ', value: true),
+                        ].map((opt) {
+                          final selected = _filter.requiresReservation == opt.value;
+                          return ChoiceChip(
+                            label: Text(opt.label),
+                            selected: selected,
+                            onSelected: (_) => setState(() {
+                              _filter = _filter.copyWith(
+                                requiresReservation: opt.value,
+                                clearRequiresReservation: opt.value == null,
+                              );
+                            }),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+                      _SectionLabel('その他の条件'),
+                      _BigSwitchTile(
+                        icon: Icons.roofing,
+                        label: '屋根あり',
+                        value: _filter.roofedOnly,
+                        onChanged: (v) => setState(() => _filter = _filter.copyWith(roofedOnly: v)),
+                      ),
+                      _BigSwitchTile(
+                        icon: Icons.lock_outline,
+                        label: '地球ロック(固定物への施錠)可',
+                        value: _filter.groundLockableOnly,
+                        onChanged: (v) => setState(() => _filter = _filter.copyWith(groundLockableOnly: v)),
+                      ),
+                      _BigSwitchTile(
+                        icon: Icons.horizontal_rule,
+                        label: '傾斜なし',
+                        value: _filter.flatOnly,
+                        onChanged: (v) => setState(() => _filter = _filter.copyWith(flatOnly: v)),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(_filter),
-                    child: const Text('この条件で絞り込む'),
+              ),
+              const SizedBox(height: 12),
+              // ── 下部固定の操作ボタン ──
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                      onPressed: () => setState(() => _filter = const SpotFilter()),
+                      child: const Text('条件をリセット'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                      onPressed: () => Navigator.of(context).pop(_filter),
+                      child: const Text('この条件で絞り込む'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

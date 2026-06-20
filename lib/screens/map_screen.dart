@@ -68,6 +68,8 @@ class _MapScreenState extends State<MapScreen> {
   double _zoom = 14;
   bool _hasViewport = false;
   Timer? _viewportDebounce;
+  // 起動後、最初に現在地へカメラを合わせたかどうか。
+  bool _centeredOnUser = false;
 
   /// デスクトップ(Windows/Linux/macOS)では flutter_map(OpenStreetMap) を使う。
   static bool get _useDesktopMap =>
@@ -93,7 +95,7 @@ class _MapScreenState extends State<MapScreen> {
     final initial = await _locationService.getCurrentLatLng();
     if (initial != null && mounted) {
       setState(() => _currentLocation = initial);
-      _moveCamera(initial, 15);
+      _maybeCenterOnUser();
       _loadJmpsaSpots(initial);
     }
     _positionSub = _locationService.watchPosition().listen((pos) {
@@ -107,6 +109,21 @@ class _MapScreenState extends State<MapScreen> {
     } else {
       _googleMapController?.animateCamera(CameraUpdate.newLatLngZoom(target, zoom));
     }
+  }
+
+  /// 起動直後、現在地が取得でき地図も準備できていれば一度だけ現在地へ寄せる。
+  /// 現在地取得とマップ生成は順序が前後しうるため、両方の契機から呼ぶ。
+  void _maybeCenterOnUser() {
+    if (_centeredOnUser) return;
+    final loc = _currentLocation;
+    if (loc == null) return;
+    if (_useDesktopMap) {
+      _flutterMapController.move(ll.LatLng(loc.latitude, loc.longitude), 15);
+    } else {
+      if (_googleMapController == null) return;
+      _googleMapController!.moveCamera(CameraUpdate.newLatLngZoom(loc, 15));
+    }
+    _centeredOnUser = true;
   }
 
   Future<void> _loadJmpsaSpots(LatLng around) async {
@@ -301,21 +318,10 @@ class _MapScreenState extends State<MapScreen> {
                       Positioned(
                         bottom: 16,
                         right: 8,
-                        child: Column(
-                          children: [
-                            _BigFab(
-                              icon: Icons.my_location,
-                              tooltip: '現在地',
-                              onPressed: _focusOnMyLocation,
-                            ),
-                            const SizedBox(height: 14),
-                            _BigFab(
-                              icon: Icons.add_location_alt,
-                              tooltip: '駐輪場を登録(地図長押しでも可)',
-                              color: AppTheme.accent,
-                              onPressed: () => _onMapLongPress(_currentLocation ?? _defaultCenter),
-                            ),
-                          ],
+                        child: _BigFab(
+                          icon: Icons.my_location,
+                          tooltip: '現在地',
+                          onPressed: _focusOnMyLocation,
                         ),
                       ),
                       // 出典表示。FAB(右下)と重ならないよう右側に余白を確保し、
@@ -345,13 +351,18 @@ class _MapScreenState extends State<MapScreen> {
       onMapCreated: (c) {
         _googleMapController = c;
         _updateGoogleViewport();
+        _maybeCenterOnUser();
       },
       onCameraMove: (pos) => _zoom = pos.zoom,
       onCameraIdle: _updateGoogleViewport,
       onLongPress: _onMapLongPress,
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
+      // 標準のズームボタン・方向(コンパス)ボタン・ツールバーを非表示にする。
       zoomControlsEnabled: false,
+      compassEnabled: false,
+      rotateGesturesEnabled: false,
+      mapToolbarEnabled: false,
       markers: spots
           .map((spot) => Marker(
                 markerId: MarkerId(spot.id),
@@ -383,7 +394,10 @@ class _MapScreenState extends State<MapScreen> {
       options: fmap.MapOptions(
         initialCenter: ll.LatLng(_defaultCenter.latitude, _defaultCenter.longitude),
         initialZoom: 14,
-        onMapReady: _updateFlutterViewport,
+        onMapReady: () {
+          _updateFlutterViewport();
+          _maybeCenterOnUser();
+        },
         onPositionChanged: (camera, hasGesture) {
           final b = camera.visibleBounds;
           _onViewportChanged(b.north, b.south, b.east, b.west, camera.zoom);
@@ -424,19 +438,18 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 class _BigFab extends StatelessWidget {
-  const _BigFab({required this.icon, required this.tooltip, required this.onPressed, this.color});
+  const _BigFab({required this.icon, required this.tooltip, required this.onPressed});
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: color ?? AppTheme.surface,
+        color: AppTheme.surface,
         shape: const CircleBorder(),
         elevation: 4,
         child: InkWell(
@@ -445,7 +458,7 @@ class _BigFab extends StatelessWidget {
           child: SizedBox(
             width: 64,
             height: 64,
-            child: Icon(icon, size: 30, color: color == null ? AppTheme.accent : Colors.white),
+            child: Icon(icon, size: 30, color: AppTheme.accent),
           ),
         ),
       ),
