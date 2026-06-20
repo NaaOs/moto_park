@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/parking_spot.dart';
@@ -7,6 +9,7 @@ import '../models/spot_report.dart';
 import '../services/jmpsa_parking_service.dart';
 import '../services/navigation_launcher.dart';
 import '../services/spot_repository.dart';
+import '../services/user_preferences.dart';
 import '../theme/app_theme.dart';
 
 /// 駐輪場の詳細画面。
@@ -34,6 +37,33 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   void initState() {
     super.initState();
     _loadDetailIfJmpsa();
+    // 「最近見た」に記録する(build後にProvider更新するためマイクロタスクで)。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<UserPreferences>().addRecent(spot.id);
+    });
+  }
+
+  /// 共有用テキスト(名称・住所・Googleマップのリンク)を作る。
+  String _shareText() {
+    final mapUrl = 'https://www.google.com/maps/search/?api=1&query=${spot.latitude},${spot.longitude}';
+    final addr = spot.address.isEmpty ? '' : '\n${spot.address}';
+    return '${spot.name}$addr\n$mapUrl';
+  }
+
+  Future<void> _share() async {
+    final text = _shareText();
+    try {
+      await Share.share(text, subject: spot.name);
+    } catch (_) {
+      // 共有が使えない環境(一部デスクトップ等)ではクリップボードにコピー。
+      if (!mounted) return;
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('共有情報をクリップボードにコピーしました')),
+        );
+      }
+    }
   }
 
   Future<void> _loadDetailIfJmpsa() async {
@@ -55,8 +85,26 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
         ? spot.photoUrls
         : (_detail?.photoUrls ?? const <String>[]);
 
+    final prefs = context.watch<UserPreferences>();
+    final isFav = prefs.isFavorite(spot.id);
+
     return Scaffold(
-      appBar: AppBar(title: Text(spot.name)),
+      appBar: AppBar(
+        title: Text(spot.name),
+        actions: [
+          IconButton(
+            tooltip: isFav ? 'お気に入りから削除' : 'お気に入りに追加',
+            icon: Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                color: isFav ? Colors.redAccent : null),
+            onPressed: () => prefs.toggleFavorite(spot.id),
+          ),
+          IconButton(
+            tooltip: '共有',
+            icon: const Icon(Icons.share),
+            onPressed: _share,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

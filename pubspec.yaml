@@ -49,6 +49,9 @@ dependencies:
   geolocator: ^13.0.1
   url_launcher: ^6.3.1
 
+  # 駐輪場の共有(Web Share API / 各OSの共有シート。失敗時はクリップボードへフォールバック)
+  share_plus: ^10.1.4
+
   # JMPSA(日本二輪車普及安全協会)の駐車場検索から最新データを動的取得する
   http: ^1.2.2
 
