@@ -390,6 +390,8 @@ class _MapScreenState extends State<MapScreen> {
       onLongPress: _onMapLongPress,
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
+      // Webで指1本でも地図を動かせるようにする(既定のcooperativeは2本指必須)。
+      webGestureHandling: WebGestureHandling.greedy,
       // 標準のズームボタン・方向(コンパス)ボタン・ツールバーを非表示にする。
       zoomControlsEnabled: false,
       compassEnabled: false,

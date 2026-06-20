@@ -16,6 +16,9 @@ class FilterSheet extends StatefulWidget {
     return showModalBottomSheet<SpotFilter>(
       context: context,
       isScrollControlled: true,
+      // モバイルのタッチで「ドラッグして閉じる」操作が内部スクロールを
+      // 奪ってしまい条件をスクロールできなくなるため、ドラッグ閉じを無効化する。
+      enableDrag: false,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
