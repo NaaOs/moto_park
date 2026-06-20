@@ -20,7 +20,7 @@ import 'add_spot_screen.dart';
 import 'spot_detail_screen.dart';
 
 /// メイン画面: 駐輪場ピンの地図表示・絞り込み・現在地・新規登録の起点。
-/// Windows/Linux/macOS では flutter_map(OpenStreetMap) を使用し、
+/// Windows では flutter_map(OpenStreetMap) を使用し、
 /// Web では google_maps_flutter を使用する。
 ///
 /// 全国JMPSAデータ(4〜5万件)を同梱しているため、地図には「表示領域内」かつ
@@ -43,7 +43,7 @@ class _MapScreenState extends State<MapScreen> {
 
   // Google Maps コントローラ (Web)
   GoogleMapController? _googleMapController;
-  // flutter_map コントローラ (Windows / Linux / macOS)
+  // flutter_map コントローラ (Windows)
   final _flutterMapController = fmap.MapController();
 
   final _locationService = LocationService();
@@ -71,12 +71,9 @@ class _MapScreenState extends State<MapScreen> {
   // 起動後、最初に現在地へカメラを合わせたかどうか。
   bool _centeredOnUser = false;
 
-  /// デスクトップ(Windows/Linux/macOS)では flutter_map(OpenStreetMap) を使う。
+  /// Windows デスクトップでは flutter_map(OpenStreetMap) を使う(Web は Google Maps)。
   static bool get _useDesktopMap =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.windows ||
-          defaultTargetPlatform == TargetPlatform.linux ||
-          defaultTargetPlatform == TargetPlatform.macOS);
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
 
   @override
   void initState() {
@@ -386,7 +383,7 @@ class _MapScreenState extends State<MapScreen> {
     _onViewportChanged(ne.latitude, sw.latitude, ne.longitude, sw.longitude, _zoom);
   }
 
-  // ── flutter_map / OpenStreetMap (Windows / Linux / macOS) ─────────────────
+  // ── flutter_map / OpenStreetMap (Windows) ─────────────────────────────────
 
   Widget _buildFlutterMap(List<ParkingSpot> spots) {
     return fmap.FlutterMap(

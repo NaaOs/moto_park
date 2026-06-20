@@ -32,10 +32,10 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
 | プラットフォーム | 地図エンジン | 備考 |
 |---|---|---|
 | **Web** | Google Maps | PWA 対応。ライブ取得は CORS プロキシ経由 |
-| **Windows / Linux / macOS** | OpenStreetMap ([flutter_map](https://pub.dev/packages/flutter_map)) | `google_maps_flutter` がデスクトップ非対応のため |
+| **Windows（デスクトップ）** | OpenStreetMap ([flutter_map](https://pub.dev/packages/flutter_map)) | `google_maps_flutter` がデスクトップ非対応のため |
 
-> デスクトップと Web で地図エンジンを自動で切り替えます（`defaultTargetPlatform` で判定）。
-> ※ iOS / Android は対象外です。
+> Windows と Web で地図エンジンを自動で切り替えます（`defaultTargetPlatform` で判定）。
+> ※ iOS / Android / Linux / macOS は対象外です。
 
 ## 技術スタック
 

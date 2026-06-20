@@ -41,7 +41,7 @@ dependencies:
 
   # Map (Google Maps — Android / iOS / Web)
   google_maps_flutter: ^2.10.0
-  # Map (OpenStreetMap — Windows / Linux / macOS desktop)
+  # Map (OpenStreetMap — Windows desktop)
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
 
