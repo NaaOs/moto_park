@@ -6,19 +6,29 @@ import 'package:http/http.dart' as http;
 import '../models/parking_spot.dart';
 
 /// JMPSAの駐車場詳細ページから追加取得する情報。
-/// 予約制の場合の予約先URL・備考・写真など、一覧には無い項目を保持する。
+/// 予約先URL・備考・写真に加え、詳細テーブルの各項目(収容台数・車両制限など)を保持する。
 class JmpsaSpotDetail {
   final String remarks; // 備考(予約案内文など)
   final String? reservationUrl; // 予約サービス(akippa/特P等)のURL
   final List<String> photoUrls; // 駐車場の写真
+  // 詳細テーブルの項目(ラベル→値)。例: {'収容台数':'30台','車両制限':'排気量50cc以下は不可', ...}
+  final Map<String, String> info;
 
   const JmpsaSpotDetail({
     this.remarks = '',
     this.reservationUrl,
     this.photoUrls = const [],
+    this.info = const {},
   });
 
-  bool get isEmpty => remarks.isEmpty && reservationUrl == null && photoUrls.isEmpty;
+  String? get bikeType => info['バイク種別']; // 対応するバイクのサイズ区分(50cc以下 等)
+  String? get parkingType => info['駐車場形態']; // 種別(時間貸 等)
+  String? get availableHours => info['利用可能時間'];
+  String? get capacity => info['収容台数'];
+  String? get vehicleRestriction => info['車両制限'];
+
+  bool get isEmpty =>
+      remarks.isEmpty && reservationUrl == null && photoUrls.isEmpty && info.isEmpty;
 }
 
 /// JMPSA(日本二輪車普及安全協会)の駐車場検索(https://www.jmpsa.or.jp/society/parking/)から
@@ -64,9 +74,9 @@ class JmpsaParkingService {
   );
   static final _idPattern = RegExp(r'/p-(\w+)\.html');
 
-  // 詳細ページの「備考」行(予約案内文・予約URLを含む)。
-  static final _remarksPattern = RegExp(
-    r'detail-table-ttl">備考</th>\s*<td class="p-parking-detail-table-txt"[^>]*>(.*?)</td>',
+  // 詳細ページのテーブル行(項目名→値)。所在地・収容台数・車両制限・備考 等。
+  static final _detailRowPattern = RegExp(
+    r'detail-table-ttl">(.*?)</th>\s*<td class="p-parking-detail-table-txt"[^>]*>(.*?)</td>',
     dotAll: true,
   );
   // 詳細ページ内の予約サービス等の外部URL。
@@ -115,16 +125,25 @@ class JmpsaParkingService {
     }
   }
 
-  /// 詳細ページHTMLから備考・予約URL・写真を抽出する(テストのため公開)。
+  /// 詳細ページHTMLから備考・予約URL・写真・各項目を抽出する(テストのため公開)。
   JmpsaSpotDetail parseDetail(String html) {
     var remarks = '';
     String? reservationUrl;
-    final remarksMatch = _remarksPattern.firstMatch(html);
-    if (remarksMatch != null) {
-      final inner = remarksMatch.group(1)!;
-      remarks = _cleanMultiline(inner);
-      final href = _hrefPattern.firstMatch(inner);
-      if (href != null) reservationUrl = _decodeEntities(href.group(1)!);
+    final info = <String, String>{};
+
+    // 詳細テーブルの各行を項目名→値で取り込む。
+    for (final m in _detailRowPattern.allMatches(html)) {
+      final label = _clean(m.group(1)!);
+      final rawValue = m.group(2)!;
+      if (label.isEmpty) continue;
+      if (label == '備考') {
+        remarks = _cleanMultiline(rawValue);
+        final href = _hrefPattern.firstMatch(rawValue);
+        if (href != null) reservationUrl = _decodeEntities(href.group(1)!);
+      } else {
+        final value = _cleanMultiline(rawValue);
+        if (value.isNotEmpty) info[label] = value;
+      }
     }
 
     // 写真URLを重複排除しつつ絶対URL化する。
@@ -139,6 +158,7 @@ class JmpsaParkingService {
       remarks: remarks,
       reservationUrl: reservationUrl,
       photoUrls: photos,
+      info: info,
     );
   }
 

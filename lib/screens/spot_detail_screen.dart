@@ -115,6 +115,10 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
           _FeeCard(spot: spot),
           const SizedBox(height: 16),
           _InfoCard(spot: spot),
+          if (_detail != null) ...[
+            const SizedBox(height: 16),
+            _JmpsaDetailCard(detail: _detail!),
+          ],
           if (_detail != null && _detail!.remarks.isNotEmpty) ...[
             const SizedBox(height: 16),
             _RemarksCard(
@@ -302,6 +306,60 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
         const SnackBar(content: Text('通報を受け付けました。ご協力ありがとうございます。')),
       );
     }
+  }
+}
+
+/// JMPSA詳細ページの項目(バイク種別・車両制限・収容台数・利用可能時間)を表示するカード。
+/// 値が取得できた項目のみ表示し、何も無ければ表示しない。
+class _JmpsaDetailCard extends StatelessWidget {
+  const _JmpsaDetailCard({required this.detail});
+
+  final JmpsaSpotDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <({IconData icon, String label, String? value})>[
+      (icon: Icons.two_wheeler, label: 'バイク種別', value: detail.bikeType),
+      (icon: Icons.do_not_disturb_on_outlined, label: '車両制限', value: detail.vehicleRestriction),
+      (icon: Icons.local_parking, label: '収容台数', value: detail.capacity),
+      (icon: Icons.schedule, label: '利用可能時間', value: detail.availableHours),
+    ].where((r) => r.value != null && r.value!.isNotEmpty).toList();
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < rows.length; i++) ...[
+              if (i > 0) const Divider(height: 18),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(rows[i].icon, size: 20, color: Colors.black54),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 88,
+                    child: Text(
+                      rows[i].label,
+                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      rows[i].value!,
+                      style: const TextStyle(fontSize: 15, color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -97,16 +97,34 @@ void main() {
     ]);
   });
 
-  test('備考の無い詳細ページは空のJmpsaSpotDetailを返す', () {
+  test('詳細ページからバイク種別・収容台数・車両制限・利用可能時間を抽出できる', () {
+    final detail = JmpsaParkingService().parseDetail(_detailInfoHtml);
+
+    expect(detail.bikeType, '125cc以下');
+    expect(detail.capacity, '44台');
+    expect(detail.vehicleRestriction, '排気量50cc以下は不可');
+    expect(detail.availableHours, '24H');
+    expect(detail.info['所在地'], '練馬区練馬1-17-5');
+  });
+
+  test('テーブル行が無い詳細ページは空のJmpsaSpotDetailを返す', () {
     final detail = JmpsaParkingService().parseDetail(
-      '<table class="p-parking-detail-table"><tbody>'
-      '<tr><th class="p-parking-detail-table-ttl">所在地</th>'
-      '<td class="p-parking-detail-table-txt">新宿区新宿3-37</td></tr>'
-      '</tbody></table>',
+      '<div class="p-parking-detail-wrap"><p>準備中</p></div>',
     );
     expect(detail.isEmpty, true);
   });
 }
+
+// バイク種別・収容台数・車両制限などを含む詳細ページのサンプル。
+const _detailInfoHtml = '''
+<table class="p-parking-detail-table"><tbody>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">所在地</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">練馬区練馬1-17-5</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">バイク種別</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">125cc以下</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">利用可能時間</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">24H</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">収容台数</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">44台</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">車両制限</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">排気量50cc以下は不可</td></tr>
+</tbody></table>
+''';
 
 // JMPSAの予約制駐車場の詳細ページから抜粋したサンプル(写真は重複ありで掲載される)。
 const _detailHtml = '''
