@@ -1,46 +1,137 @@
-# MotoPark
+<div align="center">
 
-バイク専用・時間貸し駐輪場マップ(MVP)。
+<img src="assets/icon/app_icon.png" width="120" alt="MotoPark アイコン">
 
-## 地図
+# MotoPark — バイク駐輪場マップ
 
-地図表示には **Google Maps** ([`google_maps_flutter`](https://pub.dev/packages/google_maps_flutter)) を使用します。
-利用には Google Cloud Console で取得した APIキー(Maps JavaScript API / Maps SDK for Android / Maps SDK for iOS を有効化)が必要です。
-以下のプレースホルダー `YOUR_GOOGLE_MAPS_API_KEY` を取得したキーに置き換えてください。
+**全国のバイク用「時間貸し」駐輪場を地図で探せるアプリ**
 
-- Web: [`web/index.html`](web/index.html)
-- Android: [`android/app/src/main/AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml)
-- iOS: [`ios/Runner/AppDelegate.swift`](ios/Runner/AppDelegate.swift)
+Flutter 製 / Web・Windows・Android・iOS 対応 / PWA 対応
 
-## データの保存方式
+</div>
 
-駐輪場データは更新頻度が低いため、外部バックエンド(Firebase等)を使わず
-**端末内(SharedPreferences)に保存**します。
+---
 
-- 初回起動時に [`assets/seed_spots.json`](assets/seed_spots.json) のサンプルデータを取り込みます。
-- データは [JMPSA(日本二輪車普及安全協会)の駐車場検索](https://www.jmpsa.or.jp/society/parking/) を参照し、
-  **時間貸し駐輪場のみ**を地図にプロットします(月極駐車場は表示しません)。
-- 新規登録・通報による非表示化はすべて端末内のデータを直接更新します。
-- ログイン・ユーザー登録は不要です。
-- データ管理の実体は [`lib/services/spot_repository.dart`](lib/services/spot_repository.dart) です。
+## 概要
 
-## 起動方法
+MotoPark は、ライダーが出先で**バイクを停められる時間貸し駐輪場**をすばやく見つけるためのアプリです。
+[JMPSA(日本二輪車普及安全協会)](https://www.jmpsa.or.jp/society/parking/) の全国駐輪場データ **38,799 件**を同梱し、オフラインでも地図上に表示できます。予約制（akippa・特P 等）の駐輪場では、詳細画面から備考・写真・予約サイトへのリンクも確認できます。
+
+## 主な特徴
+
+- 🗺️ **全国 38,799 件の駐輪場を地図表示** — JMPSA の時間貸し駐輪場データを同梱
+- 📍 **現在地から探せる** — 起動時に現在地へ移動、周辺の最新情報も動的取得
+- 🔎 **ライダー向けの絞り込み** — 予約の要否 / 排気量 / 屋根 / 地球ロック / 路面 / 傾斜
+- 🅿️ **予約制スポットに対応** — 詳細画面で備考・写真・予約サイトへのリンクを表示
+- 🧭 **ナビ連携** — 目的地までの経路案内を外部マップアプリで起動
+- 📱 **PWA 対応** — ブラウザから「ホーム画面に追加」でアプリのように利用可能
+- ⚡ **大量マーカーでも軽快** — 表示領域内のみ描画するビューポートカリング
+
+## 対応プラットフォーム
+
+| プラットフォーム | 地図エンジン | 備考 |
+|---|---|---|
+| **Web** | Google Maps | PWA 対応。ライブ取得は CORS プロキシ経由 |
+| **Windows / Linux / macOS** | OpenStreetMap ([flutter_map](https://pub.dev/packages/flutter_map)) | `google_maps_flutter` がデスクトップ非対応のため |
+| **Android / iOS** | Google Maps | — |
+
+> デスクトップとモバイル/Web で地図エンジンを自動で切り替えます（`defaultTargetPlatform` で判定）。
+
+## 技術スタック
+
+- **Flutter** / Dart
+- 地図: [`google_maps_flutter`](https://pub.dev/packages/google_maps_flutter)（モバイル/Web）, [`flutter_map`](https://pub.dev/packages/flutter_map) + OpenStreetMap（デスクトップ）
+- 位置情報: [`geolocator`](https://pub.dev/packages/geolocator)
+- 通信: [`http`](https://pub.dev/packages/http)
+- 状態管理: [`provider`](https://pub.dev/packages/provider)
+- ローカル保存: [`shared_preferences`](https://pub.dev/packages/shared_preferences)
+
+## データについて
+
+- 同梱データ [`assets/jmpsa_spots.json`](assets/jmpsa_spots.json)（約 24MB / 38,799 件）は、
+  [`tool/harvest_jmpsa.dart`](tool/harvest_jmpsa.dart) で JMPSA から一括取得して生成します。
+  ```bash
+  dart run tool/harvest_jmpsa.dart   # 全47都道府県を巡回（約20分）
+  ```
+- 起動時にバックグラウンド isolate で読み込み、地図には**表示領域内・ズーム13以上・最大50件**のみ描画します。
+- 詳細（備考・予約URL・写真）は、スポットを開いたときに JMPSA の詳細ページから**遅延取得**します。
+- ユーザーが追加・通報した分は端末内（SharedPreferences）に保存します（ログイン不要）。
+
+> 出典: [JMPSA(日本二輪車普及安全協会) 全国バイク駐車場案内](https://www.jmpsa.or.jp/society/parking/)。
+> 料金・営業時間等は変動する場合があるため、利用時は現地表示・各サービスをご確認ください。
+
+## セットアップ
 
 ```bash
 flutter pub get
-flutter run -d chrome
 ```
 
-## Getting Started
+### 起動
 
-This project is a starting point for a Flutter application.
+```bash
+flutter run -d windows   # Windows デスクトップ（OpenStreetMap）
+flutter run -d chrome    # Web（Google Maps）
+```
 
-A few resources to get you started if this is your first Flutter project:
+> Web/モバイルの Google Maps を表示するには API キーが必要です（後述「APIキーの設定」）。
+> Windows デスクトップは OpenStreetMap を使うため API キー不要です。
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## ビルド・デプロイ
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Web（GitHub Pages・無料）
+
+`main` ブランチへの push で [GitHub Actions](.github/workflows/deploy-web.yml) が自動ビルド・公開します。
+
+- 公開 URL: `https://<ユーザー名>.github.io/<リポジトリ名>/`
+- `--base-href` をリポジトリ名に合わせること
+- 公開 Web 版でライブ取得（周辺検索・詳細）を動かすには、JMPSA は CORS 非対応のため
+  [Cloudflare Worker のプロキシ](cloudflare-worker/jmpsa-proxy.js) を経由します
+  （`--dart-define=JMPSA_PROXY=<WorkerのURL>`）。同梱データのみなら不要です。
+
+### iOS（Mac 不要のクラウドビルド）
+
+[`codemagic.yaml`](codemagic.yaml) に2つのワークフローを用意しています。
+
+- `ios-unsigned` … 署名なし `.ipa` を生成 → [Sideloadly](https://sideloadly.io) で無料 Apple ID により実機へ
+- `ios-testflight` … Apple Developer Program 登録のうえ TestFlight 配信
+
+### アプリアイコンの再生成
+
+```bash
+dart run flutter_launcher_icons   # assets/icon/app_icon.png から全プラットフォーム分を生成
+```
+
+## APIキーの設定
+
+Google Maps の API キーは**リポジトリに含めず**、ビルド時に注入します。
+
+| 用途 | 設定方法 |
+|---|---|
+| **Web** | GitHub の Secrets に `GOOGLE_MAPS_API_KEY` を登録（Actions がビルド時に `web/index.html` へ注入） |
+| **iOS** | [`ios/Flutter/Secrets.xcconfig.example`](ios/Flutter/Secrets.xcconfig.example) を `Secrets.xcconfig` にコピーしてキーを記入（gitignore 済み） |
+| **ローカルWeb開発** | `web/index.html` の `__GOOGLE_MAPS_API_KEY__` を一時的に自分のキーへ置換（コミットしない） |
+
+> Web の Maps キーは仕組み上ブラウザから見えるため、Google Cloud Console で
+> **HTTPリファラー制限**（公開ドメイン・`localhost`）と **API 制限**を必ず設定してください。
+
+## プロジェクト構成
+
+```
+lib/
+  models/        ParkingSpot / SpotFilter などのデータモデル
+  services/      JMPSA取得・データセット・位置情報・保存リポジトリ
+  screens/       地図 / 詳細 / 新規登録
+  widgets/       絞り込みシート 等
+assets/
+  jmpsa_spots.json   同梱の全国データ(harvest生成)
+  icon/              アプリアイコン素材
+tool/
+  harvest_jmpsa.dart 全国データ一括取得スクリプト
+cloudflare-worker/
+  jmpsa-proxy.js     Web公開用のCORSプロキシ
+```
+
+## 免責
+
+- 本アプリのデータは JMPSA の公開情報を参照しています。内容の正確性・最新性は保証されません。
+- 料金・営業時間・予約要否は変動する場合があります。実際の利用時は現地表示および各予約サービスをご確認ください。
