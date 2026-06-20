@@ -39,7 +39,7 @@ jobs:
       # ライブ取得・詳細取得(備考/予約URL)が動く。空のままだと同梱データのみ。
       - run: >
           flutter build web --release --base-href /moto_park/
-          --dart-define=JMPSA_PROXY=https://motopark-proxy.YOUR-SUBDOMAIN.workers.dev
+          --dart-define=JMPSA_PROXY=https://motopark-proxy.YOUR-un-love-bad.workers.dev
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
