@@ -63,6 +63,12 @@ class SpotRepository {
     yield* _controller.stream;
   }
 
+  /// 現在の全スポット(非表示含む)のスナップショット。お気に入り等のID解決用。
+  Future<List<ParkingSpot>> snapshot() async {
+    await _ready;
+    return List.unmodifiable(_spots);
+  }
+
   /// ユーザーによる新規駐輪場の追加。
   Future<String> addSpot(ParkingSpot spot) async {
     await _ready;
