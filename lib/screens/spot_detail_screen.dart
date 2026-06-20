@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter_map/flutter_map.dart' as fmap;
+import 'package:latlong2/latlong.dart' as ll;
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -108,37 +110,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (photos.isNotEmpty)
-            SizedBox(
-              height: 180,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: photos.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (_, i) => ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    photos[i],
-                    width: 240,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _photoPlaceholder(),
-                  ),
-                ),
-              ),
-            )
-          else
-            _photoPlaceholder(height: 160),
-          if (_loadingDetail) ...[
-            const SizedBox(height: 8),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                SizedBox(width: 8),
-                Text('詳細情報を取得中…', style: TextStyle(fontSize: 13, color: Colors.black54)),
-              ],
-            ),
-          ],
+          _buildHeroMedia(photos),
           const SizedBox(height: 16),
           _FeeCard(spot: spot),
           const SizedBox(height: 16),
@@ -182,11 +154,124 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     );
   }
 
+  /// 画像エリア。写真があればカルーセル、取得中はローディング、
+  /// 写真が無ければ地図プレビューを表示する。
+  Widget _buildHeroMedia(List<String> photos) {
+    if (photos.isNotEmpty) {
+      return SizedBox(
+        height: 180,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: photos.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (_, i) => ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              photos[i],
+              width: 240,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => _photoPlaceholder(),
+            ),
+          ),
+        ),
+      );
+    }
+    // 取得完了までは確定させず、ローディングを表示(ちらつき防止)。
+    if (_loadingDetail) return _loadingMedia();
+    // 写真が無い場合は、場所が分かる地図プレビューを代わりに表示。
+    return _mapPreview();
+  }
+
+  /// 写真取得中のローディング表示。
+  Widget _loadingMedia() {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.center,
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)),
+          SizedBox(height: 10),
+          Text('写真を確認中…', style: TextStyle(fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  /// 写真が無いときの代替: 駐輪場の位置を示す操作不可の地図プレビュー(OSM・キー不要)。
+  Widget _mapPreview() {
+    final point = ll.LatLng(spot.latitude, spot.longitude);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 160,
+        child: Stack(
+          children: [
+            fmap.FlutterMap(
+              options: fmap.MapOptions(
+                initialCenter: point,
+                initialZoom: 16,
+                interactionOptions: const fmap.InteractionOptions(flags: fmap.InteractiveFlag.none),
+              ),
+              children: [
+                fmap.TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'jp.or.jmpsa.motopark',
+                ),
+                fmap.MarkerLayer(
+                  markers: [
+                    fmap.Marker(
+                      point: point,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(Icons.location_pin, color: AppTheme.accent, size: 40),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Positioned(
+              left: 8,
+              top: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.map_outlined, size: 14, color: Colors.white),
+                    SizedBox(width: 5),
+                    Text('写真なし — 地図で表示', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+            const Positioned(
+              right: 4,
+              bottom: 2,
+              child: Text(
+                '© OpenStreetMap',
+                style: TextStyle(fontSize: 9, color: Colors.black54),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _photoPlaceholder({double height = 180}) {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       alignment: Alignment.center,
