@@ -1,1 +1,3 @@
 #include "Generated.xcconfig"
+// APIキー等の秘密情報(gitignore対象)。存在しなくてもビルドできるよう任意include。
+#include? "Secrets.xcconfig"

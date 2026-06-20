@@ -1,11 +1,11 @@
 {
-    "name": "motopark",
-    "short_name": "motopark",
+    "name": "MotoPark - バイク駐輪場マップ",
+    "short_name": "MotoPark",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1A6B66",
+    "theme_color": "#1A6B66",
+    "description": "全国のバイク駐輪場(時間貸し)を地図で探せるアプリ。JMPSAの全国データに対応。",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

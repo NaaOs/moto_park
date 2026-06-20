@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Google Maps SDK のAPIキー。実値はビルド設定 GOOGLE_MAPS_API_KEY から注入され、
+	     リポジトリには含めない(Secrets.xcconfig は gitignore)。 -->
+	<key>GMSApiKey</key>
+	<string>$(GOOGLE_MAPS_API_KEY)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>現在地周辺のバイク駐輪場を地図に表示するために位置情報を使用します。</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

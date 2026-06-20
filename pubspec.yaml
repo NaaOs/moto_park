@@ -66,6 +66,26 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # 全プラットフォームのアプリアイコンを assets/icon/app_icon.png から生成する。
+  # 生成コマンド: dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.4
+
+# アイコン生成の設定(flutter_launcher_icons)
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#1A6B66"
+    theme_color: "#1A6B66"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 256
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

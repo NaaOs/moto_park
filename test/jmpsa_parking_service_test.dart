@@ -9,7 +9,7 @@ const _sampleHtml = '''
 <li class="p-parking-prefecture-list-item">
 	<div class="p-parking-prefecture-wrap">
 		<div class="p-parking-prefecture-map">
-			<p class="p-parking-prefecture-map-iframe"><iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="//www.google.com/maps/embed/v1/place?key=AIzaSyC7m01RSCW9r5ViCy4asY3xdYfEp2blP1g&q=35.689687072227706,139.70136516871673&zoom=14"></iframe></p>
+			<p class="p-parking-prefecture-map-iframe"><iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="//www.google.com/maps/embed/v1/place?key=REDACTED&q=35.689687072227706,139.70136516871673&zoom=14"></iframe></p>
 		</div>
 		<div class="p-parking-prefecture-txt-box">
 			<p class="p-parking-prefecture-map-ttl"><a href="/society/parking/area13/p-16262.html" class="m-c-link">エコステーション21　新宿駅東南口自転車駐輪場<span class="m-arrow"></span></a></p>
@@ -32,7 +32,7 @@ const _sampleHtml = '''
 <li class="p-parking-prefecture-list-item">
 	<div class="p-parking-prefecture-wrap">
 		<div class="p-parking-prefecture-map">
-			<p class="p-parking-prefecture-map-iframe"><iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="//www.google.com/maps/embed/v1/place?key=AIzaSyC7m01RSCW9r5ViCy4asY3xdYfEp2blP1g&q=35.6914436182118,139.698339700699&zoom=14"></iframe></p>
+			<p class="p-parking-prefecture-map-iframe"><iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="//www.google.com/maps/embed/v1/place?key=REDACTED&q=35.6914436182118,139.698339700699&zoom=14"></iframe></p>
 		</div>
 		<div class="p-parking-prefecture-txt-box">
 			<p class="p-parking-prefecture-map-ttl"><a href="/society/parking/area13/p-1189.html" class="m-c-link">新宿駅西口駐車場<span class="m-arrow"></span></a></p>

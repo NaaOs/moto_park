@@ -34,6 +34,10 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
+      # APIキーはリポジトリに含めず、ビルド時に GitHub Secrets から index.html へ注入する。
+      # 事前に Settings → Secrets and variables → Actions で GOOGLE_MAPS_API_KEY を登録すること。
+      - name: Inject Google Maps API key
+        run: sed -i "s|__GOOGLE_MAPS_API_KEY__|${{ secrets.GOOGLE_MAPS_API_KEY }}|g" web/index.html
       # base-href はリポジトリ名に合わせる(例: リポジトリが moto-park なら /moto-park/)。
       # JMPSA_PROXY に Cloudflare Worker のURLを入れると、公開Web版でも
       # ライブ取得・詳細取得(備考/予約URL)が動く。空のままだと同梱データのみ。

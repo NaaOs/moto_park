@@ -23,7 +23,7 @@
   <!-- モバイル(iOS/Android)で正しい縮尺で表示するためのビューポート設定。
        これが無いとモバイルブラウザがデスクトップ幅で描画され極小表示になる。 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#1F6FEB">
+  <meta name="theme-color" content="#1A6B66">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -38,9 +38,12 @@
   <title>motopark</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Google Maps JavaScript API: 利用には有効なAPIキーが必要です。
-       Google Cloud Consoleで「Maps JavaScript API」を有効にしたキーに置き換えてください。 -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsgPSXfB0YXbRSK3cCJWsl4T2gn6ZhvW8"></script>
+  <!-- Google Maps JavaScript API。
+       APIキーはリポジトリに含めず、ビルド時に __GOOGLE_MAPS_API_KEY__ を
+       実際のキーへ置換して注入する(GitHub Actions が Secrets から差し込む)。
+       ローカルでWeb版を試す場合は、このプレースホルダを一時的に自分のキーへ
+       書き換える(コミットはしないこと)。 -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=__GOOGLE_MAPS_API_KEY__"></script>
 </head>
 <body>
   <!--
