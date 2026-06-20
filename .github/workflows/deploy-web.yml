@@ -35,7 +35,7 @@ jobs:
           channel: stable
       - run: flutter pub get
       # base-href はリポジトリ名に合わせる(例: リポジトリが moto-park なら /moto-park/)。
-      - run: flutter build web --release --base-href /moto-park/
+      - run: flutter build web --release --base-href /moto_park/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
