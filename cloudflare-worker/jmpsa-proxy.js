@@ -11,21 +11,24 @@
 //   3. 払い出される URL (例: https://motopark-proxy.<あなた>.workers.dev) を
 //      Flutterの web ビルドに --dart-define=JMPSA_PROXY=<そのURL> で渡す。
 //      (.github/workflows/deploy-web.yml に設定済み。URLだけ差し替える)
-//
-// セキュリティ: 読み取り専用の公開プロキシ。ALLOW_ORIGIN を自分の
-// github.io ドメインに絞るとより安全(既定は全許可)。
 
 const UPSTREAM = 'https://www.jmpsa.or.jp';
-const ALLOW_ORIGIN = '*'; // 例: 'https://<ユーザー名>.github.io' に絞ると安全
+
+// 許可するオリジン。末尾スラッシュは付けない(ブラウザのOriginと完全一致させるため)。
+// 全公開にする場合は ['*'] にする。
+// 例: GitHub Pages なら 'https://<ユーザー名>.github.io'
+const ALLOW_ORIGINS = ['https://naaos.github.io'];
 
 export default {
   async fetch(request) {
+    const allowOrigin = pickAllowOrigin(request);
+
     // CORS プリフライト
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders() });
+      return new Response(null, { headers: corsHeaders(allowOrigin) });
     }
     if (request.method !== 'GET') {
-      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders(allowOrigin) });
     }
 
     const url = new URL(request.url);
@@ -37,10 +40,10 @@ export default {
         headers: { 'User-Agent': 'Mozilla/5.0 (MotoParkProxy)' },
       });
     } catch (e) {
-      return new Response('Upstream fetch failed', { status: 502, headers: corsHeaders() });
+      return new Response('Upstream fetch failed', { status: 502, headers: corsHeaders(allowOrigin) });
     }
 
-    const headers = new Headers(corsHeaders());
+    const headers = new Headers(corsHeaders(allowOrigin));
     // JMPSAの一部エンドポイントは Content-Type が不正(末尾;)なので正規化する。
     const ct = upstream.headers.get('content-type') || '';
     if (ct.includes('text/html')) {
@@ -53,11 +56,25 @@ export default {
   },
 };
 
-function corsHeaders() {
+// ブラウザが送ってきた Origin を許可リストと照合し、一致すればその Origin を
+// そのまま返す。これにより末尾スラッシュ等の不一致による CORS 失敗を防ぐ。
+function pickAllowOrigin(request) {
+  if (ALLOW_ORIGINS.includes('*')) return '*';
+  const origin = request.headers.get('Origin') || '';
+  const normalized = origin.replace(/\/+$/, '');
+  for (const allowed of ALLOW_ORIGINS) {
+    if (allowed.replace(/\/+$/, '') === normalized) return origin;
+  }
+  // 不一致時は先頭の許可オリジンを返す(末尾スラッシュは除去)。
+  return ALLOW_ORIGINS[0].replace(/\/+$/, '');
+}
+
+function corsHeaders(allowOrigin) {
   return {
-    'Access-Control-Allow-Origin': ALLOW_ORIGIN,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': '*',
     'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
   };
 }
