@@ -14,12 +14,10 @@ import '../services/jmpsa_dataset.dart';
 import '../services/jmpsa_parking_service.dart';
 import '../services/location_service.dart';
 import '../services/spot_repository.dart';
-import '../services/user_preferences.dart';
 import '../theme/app_theme.dart';
 import '../widgets/filter_sheet.dart';
 import 'add_spot_screen.dart';
 import 'saved_screen.dart';
-import 'settings_screen.dart';
 import 'spot_detail_screen.dart';
 
 /// メイン画面: 駐輪場ピンの地図表示・絞り込み・現在地・新規登録の起点。
@@ -58,8 +56,6 @@ class _MapScreenState extends State<MapScreen> {
   SpotFilter _filter = const SpotFilter();
   // 絞り込みシート表示中は背後の地図への操作(パン/ピン選択)を無効化する。
   bool _filterOpen = false;
-  // マイバイク排気量(設定画面で登録)。設定時は地図表示から自動で除外する。
-  int? _bikeDisplacementCc;
   bool _pickingLocation = false;
 
   // location.php から取得する現在地周辺のライブデータ
@@ -181,24 +177,18 @@ class _MapScreenState extends State<MapScreen> {
       s.longitude >= _minLng &&
       s.longitude <= _maxLng;
 
-  /// マイバイク排気量が登録されていれば、その排気量を受け入れない駐輪場を除外する。
-  bool _passesBike(ParkingSpot s) {
-    final cc = _bikeDisplacementCc;
-    if (cc == null) return true;
-    return s.conditions.accepts(cc);
-  }
-
   /// 描画するマーカーを決定する。
   /// 近隣データ(seed/ユーザー登録/ライブ)は常に表示し、全国同梱データは
   /// 表示領域内かつ一定ズーム以上のときに上限まで追加する。
+  /// 排気量の絞り込みは目に見える「排気量」フィルタ(_filter)で行う。
   ({List<ParkingSpot> visible, int total}) _resolveSpots(List<ParkingSpot> repoSpots) {
     // 近隣データ(件数が少ない)をidでマージ。同梱データは後段で領域フィルタする。
     final near = <String, ParkingSpot>{};
     for (final s in repoSpots) {
-      if (_filter.matches(s) && _passesBike(s)) near[s.id] = s;
+      if (_filter.matches(s)) near[s.id] = s;
     }
     for (final s in _liveSpots) {
-      if (_filter.matches(s) && _passesBike(s)) near[s.id] = s;
+      if (_filter.matches(s)) near[s.id] = s;
     }
     final total = _datasetSpots.length + near.length;
 
@@ -219,7 +209,7 @@ class _MapScreenState extends State<MapScreen> {
       if (visible.length >= _maxMarkers) break;
       if (near.containsKey(s.id)) continue;
       if (!_inViewport(s)) continue;
-      if (!_filter.matches(s) || !_passesBike(s)) continue;
+      if (!_filter.matches(s)) continue;
       visible.add(s);
     }
     return (visible: visible, total: total);
@@ -275,9 +265,6 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // マイバイク排気量を反映(設定変更で自動的に再描画される)。
-    _bikeDisplacementCc = context.watch<UserPreferences>().bikeDisplacementCc;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('MotoPark'),
@@ -287,13 +274,6 @@ class _MapScreenState extends State<MapScreen> {
             icon: const Icon(Icons.favorite_border),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SavedScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: '設定',
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
         ],
