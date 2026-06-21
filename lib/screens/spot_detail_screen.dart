@@ -461,37 +461,53 @@ class _InfoCard extends StatelessWidget {
   final ParkingSpot spot;
   final JmpsaSpotDetail? detail;
 
-  /// 排気量・車両制限のタグ。JMPSAの「バイク種別」「車両制限」を優先して
-  /// 実データと一致させる。情報が無いJMPSAスポットでは誤解を招くタグを出さない。
-  String? _restrictionTag() {
+  // 「126cc以上」「50cc以下」などの排気量表記を抽出する。
+  static final _ccPattern = RegExp(r'(\d+)\s*cc\s*(以上|以下|未満|超)');
+
+  /// 排気量・車両制限のタグ。JMPSAの「バイク種別」「車両制限」から生成する。
+  /// データが無ければ「排気量制限なし」を表示する。
+  String _restrictionTag() {
     final d = detail;
     if (d != null) {
       final bt = d.bikeType?.trim();
-      if (bt != null && bt.isNotEmpty) return bt; // 例: 125cc以下
-      final vr = d.vehicleRestriction?.trim();
-      if (vr != null && vr.isNotEmpty) {
-        final first = vr.split('\n').first.trim();
-        if (first.contains('制限はありません') || first.contains('制限なし')) {
-          return '排気量制限なし';
-        }
-        return first; // 例: 排気量50cc以下は不可
+      if (bt != null && bt.isNotEmpty) {
+        return _ccPattern.firstMatch(bt)?.group(0)?.replaceAll(' ', '') ?? bt; // 例: 125cc以下
       }
+      final vr = d.vehicleRestriction?.trim();
+      if (vr != null && vr.isNotEmpty) return _fromVehicleRestriction(vr);
     }
-    // フォールバック: ユーザー登録スポット等はconditionsから生成。
-    if (spot.createdBy != 'jmpsa') {
-      return spot.conditions.minDisplacementCc > 0
-          ? '${spot.conditions.minDisplacementCc}cc以上可'
-          : '排気量制限なし';
+    // フォールバック: ユーザー登録スポットは conditions から生成。
+    if (spot.createdBy != 'jmpsa' && spot.conditions.minDisplacementCc > 0) {
+      return '${spot.conditions.minDisplacementCc}cc以上可';
     }
-    return null; // JMPSAで制限情報が取れない場合はタグなし。
+    return '排気量制限なし'; // データが無ければ制限なし扱い。
+  }
+
+  /// 車両制限の文章から排気量タグを作る。
+  /// 例「126cc以上。長さ2.2m以下、幅1.0m以下。」→「126cc以上」
+  /// 例「排気量50cc以下は不可」→「50cc以下不可」
+  String _fromVehicleRestriction(String vr) {
+    final first = vr.split('\n').first.trim();
+    if (first.contains('制限はありません') || first.contains('制限なし')) {
+      return '排気量制限なし';
+    }
+    final m = _ccPattern.firstMatch(first);
+    if (m != null) {
+      var token = '${m.group(1)}cc${m.group(2)}';
+      final after = first.substring(m.end).trimLeft();
+      if (after.startsWith('は不可') || after.startsWith('不可') || after.startsWith('は駐車不可')) {
+        token = '$token不可';
+      }
+      return token;
+    }
+    return first.replaceAll('排気量', '').trim(); // ccが無い場合(例:原付)はそのまま。
   }
 
   @override
   Widget build(BuildContext context) {
     final c = spot.conditions;
-    final restriction = _restrictionTag();
     final tags = <String>[
-      ?restriction,
+      _restrictionTag(),
       if (c.roofed) '屋根あり',
       if (c.groundLockable) '地球ロック可',
       if (c.flat) '傾斜なし',
