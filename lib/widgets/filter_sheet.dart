@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/parking_spot.dart';
 import '../models/spot_filter.dart';
 import '../theme/app_theme.dart';
 
@@ -34,8 +33,14 @@ class FilterSheet extends StatefulWidget {
 class _FilterSheetState extends State<FilterSheet> {
   late SpotFilter _filter;
 
-  // あなたのバイクの排気量(0 = 指定なし)。選ぶとその排気量を受け入れる駐輪場のみ表示。
-  static const _ccOptions = [0, 50, 125, 250, 400, 750];
+  // 排気量フィルタ。value=代表排気量で、その排気量を受け入れる駐輪場のみ表示する。
+  // 制限なしの駐輪場は400ccも受け入れるため「400cc以上」に該当する。
+  static const _ccOptions = <({String label, int? value})>[
+    (label: '指定なし', value: null),
+    (label: '125cc以下', value: 125),
+    (label: '125cc以上', value: 250),
+    (label: '400cc以上', value: 400),
+  ];
 
   @override
   void initState() {
@@ -75,32 +80,16 @@ class _FilterSheetState extends State<FilterSheet> {
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: _ccOptions.map((cc) {
-                          final selected = _filter.minDisplacementCc == (cc == 0 ? null : cc);
+                        children: _ccOptions.map((opt) {
+                          final selected = _filter.minDisplacementCc == opt.value;
                           return ChoiceChip(
-                            label: Text(cc == 0 ? '指定なし' : '$cc cc'),
+                            label: Text(opt.label),
                             selected: selected,
                             onSelected: (_) => setState(() {
                               _filter = _filter.copyWith(
-                                minDisplacementCc: cc == 0 ? null : cc,
-                                clearMinDisplacementCc: cc == 0,
+                                minDisplacementCc: opt.value,
+                                clearMinDisplacementCc: opt.value == null,
                               );
-                            }),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      _SectionLabel('路面状況(土・砂利は転倒リスクあり)'),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [null, GroundSurface.asphalt, GroundSurface.gravel, GroundSurface.soil].map((s) {
-                          final selected = _filter.surface == s;
-                          return ChoiceChip(
-                            label: Text(s == null ? '指定なし' : _surfaceLabel(s)),
-                            selected: selected,
-                            onSelected: (_) => setState(() {
-                              _filter = _filter.copyWith(surface: s, clearSurface: s == null);
                             }),
                           );
                         }).toList(),
@@ -142,12 +131,6 @@ class _FilterSheetState extends State<FilterSheet> {
                         value: _filter.groundLockableOnly,
                         onChanged: (v) => setState(() => _filter = _filter.copyWith(groundLockableOnly: v)),
                       ),
-                      _BigSwitchTile(
-                        icon: Icons.horizontal_rule,
-                        label: '傾斜なし',
-                        value: _filter.flatOnly,
-                        onChanged: (v) => setState(() => _filter = _filter.copyWith(flatOnly: v)),
-                      ),
                     ],
                   ),
                 ),
@@ -179,19 +162,6 @@ class _FilterSheetState extends State<FilterSheet> {
         ),
       ),
     );
-  }
-
-  String _surfaceLabel(GroundSurface s) {
-    switch (s) {
-      case GroundSurface.asphalt:
-        return 'アスファルト';
-      case GroundSurface.gravel:
-        return '砂利';
-      case GroundSurface.soil:
-        return '土';
-      case GroundSurface.unknown:
-        return '不明';
-    }
   }
 }
 
