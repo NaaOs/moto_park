@@ -114,7 +114,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
           const SizedBox(height: 16),
           _FeeCard(spot: spot),
           const SizedBox(height: 16),
-          _InfoCard(spot: spot),
+          _InfoCard(spot: spot, detail: _detail),
           if (_detail != null) ...[
             const SizedBox(height: 16),
             _JmpsaDetailCard(detail: _detail!),
@@ -457,18 +457,45 @@ class _FeeCard extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.spot});
+  const _InfoCard({required this.spot, this.detail});
   final ParkingSpot spot;
+  final JmpsaSpotDetail? detail;
+
+  /// 排気量・車両制限のタグ。JMPSAの「バイク種別」「車両制限」を優先して
+  /// 実データと一致させる。情報が無いJMPSAスポットでは誤解を招くタグを出さない。
+  String? _restrictionTag() {
+    final d = detail;
+    if (d != null) {
+      final bt = d.bikeType?.trim();
+      if (bt != null && bt.isNotEmpty) return bt; // 例: 125cc以下
+      final vr = d.vehicleRestriction?.trim();
+      if (vr != null && vr.isNotEmpty) {
+        final first = vr.split('\n').first.trim();
+        if (first.contains('制限はありません') || first.contains('制限なし')) {
+          return '排気量制限なし';
+        }
+        return first; // 例: 排気量50cc以下は不可
+      }
+    }
+    // フォールバック: ユーザー登録スポット等はconditionsから生成。
+    if (spot.createdBy != 'jmpsa') {
+      return spot.conditions.minDisplacementCc > 0
+          ? '${spot.conditions.minDisplacementCc}cc以上可'
+          : '排気量制限なし';
+    }
+    return null; // JMPSAで制限情報が取れない場合はタグなし。
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = spot.conditions;
+    final restriction = _restrictionTag();
     final tags = <String>[
-      if (c.minDisplacementCc > 0) '${c.minDisplacementCc}cc以上可' else '排気量制限なし',
+      ?restriction,
       if (c.roofed) '屋根あり',
       if (c.groundLockable) '地球ロック可',
       if (c.flat) '傾斜なし',
-      _surfaceLabel(c.surface),
+      if (c.surface != GroundSurface.unknown) _surfaceLabel(c.surface),
       spot.official ? '公式情報' : 'ユーザー投稿',
     ];
     return Card(
