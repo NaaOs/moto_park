@@ -21,14 +21,19 @@
   <meta name="description" content="全国のバイク駐輪場を地図で探せるアプリ(JMPSAデータ)">
 
   <!-- モバイル(iOS/Android)で正しい縮尺で表示するためのビューポート設定。
-       これが無いとモバイルブラウザがデスクトップ幅で描画され極小表示になる。 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+       これが無いとモバイルブラウザがデスクトップ幅で描画され極小表示になる。
+       ※ viewport-fit=cover と status-bar-style=black-translucent の併用は、
+         iOSホーム画面PWAでタップ位置がステータスバー分ずれる不具合の原因に
+         なるため使用しない。 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#1A6B66">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- default にすることでコンテンツがステータスバーの下に配置され、
+       Flutter Webのタッチ座標とのズレを防ぐ。 -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="MotoPark">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
