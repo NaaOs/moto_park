@@ -29,9 +29,66 @@ PricingType pricingTypeFromString(String? value) {
 
 String pricingTypeToString(PricingType type) => type.name;
 
+/// バイク種別・車両制限の文言から、駐輪可能な排気量範囲(下限min・上限max, 0=制限なし)を導く。
+/// JMPSAの「バイク種別」(例:125cc以下)を優先し、無ければ「車両制限」の文章から抽出する。
+({int min, int max}) deriveDisplacementRange({String? bikeType, String? vehicleRestriction}) {
+  final bt = bikeType?.trim();
+  if (bt != null && bt.isNotEmpty) {
+    final r = _rangeFromToken(bt);
+    if (r != null) return r;
+  }
+  final vr = vehicleRestriction?.trim();
+  if (vr != null && vr.isNotEmpty) {
+    final first = vr.split('\n').first;
+    if (first.contains('制限はありません') || first.contains('制限なし')) {
+      return (min: 0, max: 0);
+    }
+    final m = _ccPattern.firstMatch(first);
+    if (m != null) {
+      final after = first.substring(m.end).trimLeft();
+      final negated = after.startsWith('は不可') ||
+          after.startsWith('不可') ||
+          after.startsWith('は駐車不可');
+      return _applyKind(int.parse(m.group(1)!), m.group(2)!, negated);
+    }
+  }
+  return (min: 0, max: 0);
+}
+
+/// 排気量範囲を表示用ラベルにする(例: min125,max0 →「125cc以上」)。
+String displacementLabel(int min, int max) {
+  if (min <= 0 && max <= 0) return '排気量制限なし';
+  if (min > 0 && max <= 0) return '${min}cc以上';
+  if (min <= 0 && max > 0) return '${max}cc以下';
+  return '$min〜${max}cc';
+}
+
+final _ccPattern = RegExp(r'(\d+)\s*cc\s*(以上|以下|未満|超)');
+
+({int min, int max})? _rangeFromToken(String s) {
+  final m = _ccPattern.firstMatch(s);
+  if (m == null) return null;
+  return _applyKind(int.parse(m.group(1)!), m.group(2)!, false);
+}
+
+({int min, int max}) _applyKind(int n, String kind, bool negated) {
+  switch (kind) {
+    case '以上':
+      return negated ? (min: 0, max: n - 1) : (min: n, max: 0);
+    case '以下':
+      return negated ? (min: n + 1, max: 0) : (min: 0, max: n);
+    case '未満':
+      return negated ? (min: n, max: 0) : (min: 0, max: n - 1);
+    case '超':
+      return negated ? (min: 0, max: n) : (min: n + 1, max: 0);
+  }
+  return (min: 0, max: 0);
+}
+
 /// ライダー特化の駐輪条件。車の駐車場には無い視点で絞り込みができる。
 class SpotConditions {
-  final int minDisplacementCc; // この値以上の排気量の車種が駐輪可能 (0 = 制限なし)
+  final int minDisplacementCc; // この値以上の排気量が駐輪可能 (0 = 下限なし)
+  final int maxDisplacementCc; // この値以下の排気量が駐輪可能 (0 = 上限なし)
   final bool roofed; // 屋根あり
   final bool groundLockable; // 地球ロック(固定物への施錠)可
   final GroundSurface surface; // 路面状況
@@ -39,16 +96,31 @@ class SpotConditions {
 
   const SpotConditions({
     this.minDisplacementCc = 0,
+    this.maxDisplacementCc = 0,
     this.roofed = false,
     this.groundLockable = false,
     this.surface = GroundSurface.unknown,
     this.flat = false,
   });
 
+  /// 排気量 cc のバイクが駐輪可能か(範囲内か)。
+  bool accepts(int cc) {
+    if (minDisplacementCc > 0 && cc < minDisplacementCc) return false;
+    if (maxDisplacementCc > 0 && cc > maxDisplacementCc) return false;
+    return true;
+  }
+
+  /// 排気量制限の表示ラベル(例:「125cc以下」)。制限なしなら「排気量制限なし」。
+  String get displacementText => displacementLabel(minDisplacementCc, maxDisplacementCc);
+
+  /// 排気量の制限があるか。
+  bool get hasDisplacementLimit => minDisplacementCc > 0 || maxDisplacementCc > 0;
+
   factory SpotConditions.fromMap(Map<String, dynamic>? map) {
     if (map == null) return const SpotConditions();
     return SpotConditions(
       minDisplacementCc: (map['minDisplacementCc'] as num?)?.toInt() ?? 0,
+      maxDisplacementCc: (map['maxDisplacementCc'] as num?)?.toInt() ?? 0,
       roofed: map['roofed'] as bool? ?? false,
       groundLockable: map['groundLockable'] as bool? ?? false,
       surface: surfaceFromString(map['surface'] as String?),
@@ -58,6 +130,7 @@ class SpotConditions {
 
   Map<String, dynamic> toMap() => {
         'minDisplacementCc': minDisplacementCc,
+        if (maxDisplacementCc > 0) 'maxDisplacementCc': maxDisplacementCc,
         'roofed': roofed,
         'groundLockable': groundLockable,
         'surface': surfaceToString(surface),

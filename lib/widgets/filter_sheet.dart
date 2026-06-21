@@ -34,7 +34,8 @@ class FilterSheet extends StatefulWidget {
 class _FilterSheetState extends State<FilterSheet> {
   late SpotFilter _filter;
 
-  static const _ccOptions = [0, 125, 250, 400];
+  // あなたのバイクの排気量(0 = 指定なし)。選ぶとその排気量を受け入れる駐輪場のみ表示。
+  static const _ccOptions = [0, 50, 125, 250, 400, 750];
 
   @override
   void initState() {
@@ -70,14 +71,14 @@ class _FilterSheetState extends State<FilterSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionLabel('排気量'),
+                      _SectionLabel('排気量(あなたのバイク)'),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
                         children: _ccOptions.map((cc) {
                           final selected = _filter.minDisplacementCc == (cc == 0 ? null : cc);
                           return ChoiceChip(
-                            label: Text(cc == 0 ? '指定なし' : '$cc cc以上可'),
+                            label: Text(cc == 0 ? '指定なし' : '$cc cc'),
                             selected: selected,
                             onSelected: (_) => setState(() {
                               _filter = _filter.copyWith(

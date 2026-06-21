@@ -179,12 +179,11 @@ class _MapScreenState extends State<MapScreen> {
       s.longitude >= _minLng &&
       s.longitude <= _maxLng;
 
-  /// マイバイク排気量が登録されていれば、停められない駐輪場を除外する。
-  /// (spot.conditions.minDisplacementCc = その値以上の排気量が駐輪可能)
+  /// マイバイク排気量が登録されていれば、その排気量を受け入れない駐輪場を除外する。
   bool _passesBike(ParkingSpot s) {
     final cc = _bikeDisplacementCc;
     if (cc == null) return true;
-    return s.conditions.minDisplacementCc <= cc;
+    return s.conditions.accepts(cc);
   }
 
   /// 描画するマーカーを決定する。

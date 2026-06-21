@@ -3,7 +3,8 @@ import 'parking_spot.dart';
 /// 詳細条件による絞り込み検索の条件セット。
 /// 各フィールドが null / false の場合は「指定なし」を表す。
 class SpotFilter {
-  final int? minDisplacementCc; // 例: 125 を指定すると 125cc以上可 のスポットのみ
+  // あなたのバイクの排気量(cc)。指定すると、その排気量を受け入れる駐輪場のみ表示。
+  final int? minDisplacementCc;
   final bool roofedOnly;
   final bool groundLockableOnly;
   final GroundSurface? surface;
@@ -38,7 +39,7 @@ class SpotFilter {
       ].where((v) => v).length;
 
   bool matches(ParkingSpot spot) {
-    if (minDisplacementCc != null && spot.conditions.minDisplacementCc > minDisplacementCc!) {
+    if (minDisplacementCc != null && !spot.conditions.accepts(minDisplacementCc!)) {
       return false;
     }
     if (roofedOnly && !spot.conditions.roofed) return false;
