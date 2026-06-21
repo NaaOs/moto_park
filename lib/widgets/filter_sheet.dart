@@ -33,13 +33,13 @@ class FilterSheet extends StatefulWidget {
 class _FilterSheetState extends State<FilterSheet> {
   late SpotFilter _filter;
 
-  // 排気量フィルタ。value=代表排気量で、その排気量を受け入れる駐輪場のみ表示する。
-  // 制限なしの駐輪場は400ccも受け入れるため「400cc以上」に該当する。
+  // 排気量フィルタ(JMPSAの区分に合わせる)。value=そのクラスの代表排気量で、
+  // その排気量を受け入れる駐輪場のみ表示する。指定なしは全件表示。
   static const _ccOptions = <({String label, int? value})>[
     (label: '指定なし', value: null),
-    (label: '125cc以下', value: 125),
-    (label: '125cc以上', value: 250),
-    (label: '400cc以上', value: 400),
+    (label: '50cc', value: 50),
+    (label: '51cc~125cc', value: 125),
+    (label: '126cc以上', value: 126),
   ];
 
   @override

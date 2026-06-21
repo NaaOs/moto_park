@@ -56,6 +56,8 @@ class _MapScreenState extends State<MapScreen> {
   StreamSubscription<LatLng>? _positionSub;
   LatLng? _currentLocation;
   SpotFilter _filter = const SpotFilter();
+  // 絞り込みシート表示中は背後の地図への操作(パン/ピン選択)を無効化する。
+  bool _filterOpen = false;
   // マイバイク排気量(設定画面で登録)。設定時は地図表示から自動で除外する。
   int? _bikeDisplacementCc;
   bool _pickingLocation = false;
@@ -232,8 +234,13 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _openFilter() async {
+    setState(() => _filterOpen = true);
     final result = await FilterSheet.show(context, _filter);
-    if (result != null) setState(() => _filter = result);
+    if (!mounted) return;
+    setState(() {
+      _filterOpen = false;
+      if (result != null) _filter = result;
+    });
   }
 
   void _focusOnMyLocation() {
@@ -305,7 +312,11 @@ class _MapScreenState extends State<MapScreen> {
           return Stack(
             children: [
               // 地図は画面全体に表示し、操作UIだけ SafeArea 内に収める(ノッチ対応)。
-              _useDesktopMap ? _buildFlutterMap(spots) : _buildGoogleMap(spots),
+              // フィルタ表示中は地図への操作を無効化(Web/プラットフォームビュー対策)。
+              IgnorePointer(
+                ignoring: _filterOpen,
+                child: _useDesktopMap ? _buildFlutterMap(spots) : _buildGoogleMap(spots),
+              ),
               Positioned.fill(
                 child: SafeArea(
                   minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),

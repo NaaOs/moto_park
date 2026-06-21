@@ -153,6 +153,9 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             icon: const Icon(Icons.flag_outlined),
             label: const Text('情報の誤りを報告する'),
           ),
+          const SizedBox(height: 24),
+          // 最下部のバナー(加工せずそのまま表示)。
+          Center(child: Image.asset('assets/banner.png')),
         ],
       ),
     );
