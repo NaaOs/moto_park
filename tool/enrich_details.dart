@@ -53,11 +53,15 @@ String _decode(String s) => s
 String _clean(String s) =>
     _decode(s.replaceAll(RegExp(r'<[^>]*>'), '')).trim();
 
-String _cleanMultiline(String s) {
-  final withoutAnchors =
-      s.replaceAll(RegExp(r'<a\b[^>]*>.*?</a>', dotAll: true, caseSensitive: false), '');
-  final withBreaks =
-      withoutAnchors.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+String _cleanMultiline(String s) =>
+    _stripToText(s.replaceAll(
+        RegExp(r'<a\b[^>]*>.*?</a>', dotAll: true, caseSensitive: false), ''));
+
+/// <br>を改行に変換しつつタグ除去。アンカー(<a>)の中身は残す(TEL等の値向け)。
+String _cleanKeep(String s) => _stripToText(s);
+
+String _stripToText(String s) {
+  final withBreaks = s.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
   return _decode(withBreaks.replaceAll(RegExp(r'<[^>]*>'), ''))
       .replaceAll(RegExp(r'[ \t]+\n'), '\n')
       .replaceAll(RegExp(r'\n{2,}'), '\n')
@@ -88,7 +92,8 @@ _Detail _parse(String html) {
     } else if (label == '定休日') {
       closedDays = _cleanMultiline(raw);
     } else if (_keepLabels.contains(label)) {
-      final v = _cleanMultiline(raw);
+      // TEL等はリンクで囲まれるため中身を残して取り出す。
+      final v = _cleanKeep(raw);
       if (v.isNotEmpty) info[label] = v;
     }
   }
@@ -120,9 +125,15 @@ Future<void> main() async {
   // 詳細ページがあり、まだ details を持たないスポットのみ対象(冪等・再開可能)。
   final targets = <int>[];
   for (var i = 0; i < list.length; i++) {
+    if (list[i]['infoUrl'] is! String) continue;
     final hasDetails = (list[i]['details'] as Map?)?.isNotEmpty ?? false;
     final hasRemarks = (list[i]['remarks'] as String?)?.isNotEmpty ?? false;
-    if (list[i]['infoUrl'] is String && !hasDetails && !hasRemarks) targets.add(i);
+    // 一般スポット(予約URLなし)でTEL未取得のものは再取得対象にする
+    // (TELはリンクで囲まれており、旧版の解析で取りこぼしていたため)。
+    final isReservation = list[i]['reservationUrl'] != null;
+    final hasTel = (list[i]['details'] as Map?)?.containsKey('TEL') ?? false;
+    final needsTel = !isReservation && !hasTel;
+    if ((!hasDetails && !hasRemarks) || needsTel) targets.add(i);
   }
   stdout.writeln('対象=${targets.length} / 全${list.length}件 (既処理はスキップ)');
   await stdout.flush();

@@ -153,7 +153,9 @@ class JmpsaParkingService {
         final href = _hrefPattern.firstMatch(rawValue);
         if (href != null) reservationUrl = _decodeEntities(href.group(1)!);
       } else {
-        final value = _cleanMultiline(rawValue);
+        // TEL等はリンク(<a href="tel:...">番号</a>)で囲まれているため、
+        // アンカーは残してテキストだけ取り出す(備考のみリンクを除去する)。
+        final value = _cleanKeepText(rawValue);
         if (value.isNotEmpty) info[label] = value;
       }
     }
@@ -239,6 +241,17 @@ class JmpsaParkingService {
         text.replaceAll(RegExp(r'<a\b[^>]*>.*?</a>', dotAll: true, caseSensitive: false), '');
     final withBreaks =
         withoutAnchors.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    return _decodeEntities(withBreaks.replaceAll(RegExp(r'<[^>]*>'), ''))
+        .replaceAll(RegExp(r'[ \t]+\n'), '\n')
+        .replaceAll(RegExp(r'\n{2,}'), '\n')
+        .trim();
+  }
+
+  /// <br>を改行に変換しつつタグを除去する。アンカー(<a>)の中身は残す。
+  /// TEL等、値がリンクで囲まれている項目向け。
+  String _cleanKeepText(String text) {
+    final withBreaks =
+        text.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
     return _decodeEntities(withBreaks.replaceAll(RegExp(r'<[^>]*>'), ''))
         .replaceAll(RegExp(r'[ \t]+\n'), '\n')
         .replaceAll(RegExp(r'\n{2,}'), '\n')
