@@ -53,16 +53,18 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
 
 ## データについて
 
-- 同梱データ [`assets/jmpsa_spots.json`](assets/jmpsa_spots.json)（38,799 件）は、
+- 同梱データ [`assets/jmpsa_spots.json`](assets/jmpsa_spots.json)（約 24MB / 38,799 件）は、
   [`tool/harvest_jmpsa.dart`](tool/harvest_jmpsa.dart) で全47都道府県の一覧を取得し、
-  [`tool/enrich_details.dart`](tool/enrich_details.dart) で各駐輪場の詳細項目
-  （TEL・駐車場形態・利用可能時間・料金・収容台数・車両制限・バイク種別・管理会社・最終更新日・備考・予約URL）を焼き込んで生成します。
+  [`tool/enrich_displacement.dart`](tool/enrich_displacement.dart) で絞り込み用の排気量範囲を付与して生成します。
   ```bash
-  dart run tool/harvest_jmpsa.dart    # 全47都道府県の一覧を取得（約20分）
-  dart run tool/enrich_details.dart   # 全件の詳細項目を取得して焼き込み（再開可能）
+  dart run tool/harvest_jmpsa.dart        # 全47都道府県の一覧を取得（約20分）
+  dart run tool/enrich_displacement.dart  # 絞り込み用の排気量範囲を付与
   ```
 - 起動時にバックグラウンド isolate で読み込み、地図には**表示領域内・ズーム13以上・最大50件**のみ描画します。
-- 詳細項目は同梱データから即時表示（オフライン可）。写真は、スポットを開いたときに JMPSA の詳細ページから**遅延取得**します。
+- **分割ロード**: 起動時に読むのは一覧と座標・料金・排気量など軽量な項目のみ。
+  TEL・駐車場形態・利用可能時間・料金・収容台数・車両制限・バイク種別・管理会社・最終更新日・備考・予約URL・写真は、
+  スポットを開いたときに JMPSA の詳細ページから**遅延取得**して表示します（同梱データを肥大化させない）。
+  全件をオフライン用に焼き込みたい場合は [`tool/enrich_details.dart`](tool/enrich_details.dart) を使えます（任意）。
 - ユーザーが追加・通報した分は端末内（SharedPreferences）に保存します（ログイン不要）。
 
 > 出典: [JMPSA(日本二輪車普及安全協会) 全国バイク駐車場案内](https://www.jmpsa.or.jp/society/parking/)。
