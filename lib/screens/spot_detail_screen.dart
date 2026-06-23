@@ -133,23 +133,6 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
           ],
           const SizedBox(height: 16),
           if (spot.streetViewUrl != null) _StreetViewCard(url: spot.streetViewUrl!),
-          if (spot.infoUrl != null) ...[
-            const SizedBox(height: 16),
-            _ReferenceCard(url: spot.infoUrl!),
-          ],
-          const SizedBox(height: 16),
-          // 掲載情報の更新・削除依頼ページへ遷移する。
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
-              title: const Text('掲載情報の更新・削除依頼'),
-              subtitle: const Text('閉鎖・内容変更などの依頼方法をご案内します'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => UpdateRequestScreen(spot: spot)),
-              ),
-            ),
-          ),
           const SizedBox(height: 28),
           FilledButton.icon(
             onPressed: () => NavigationLauncher().launchTo(
@@ -170,6 +153,23 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             onPressed: () => _showReportDialog(context, repo),
             icon: const Icon(Icons.flag_outlined),
             label: const Text('情報の誤りを報告する'),
+          ),
+          // ページ最下部に外部リンク(JMPSA掲載ページ・更新/削除依頼)をまとめる。
+          if (spot.infoUrl != null) ...[
+            const SizedBox(height: 16),
+            _ReferenceCard(url: spot.infoUrl!),
+          ],
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
+              title: const Text('掲載情報の更新・削除依頼'),
+              subtitle: const Text('閉鎖・内容変更などの依頼方法をご案内します'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => UpdateRequestScreen(spot: spot)),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           // 最下部のバナー(加工せずそのまま表示)。

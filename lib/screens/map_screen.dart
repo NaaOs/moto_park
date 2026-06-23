@@ -354,14 +354,6 @@ class _MapScreenState extends State<MapScreen> {
                           onPressed: _focusOnMyLocation,
                         ),
                       ),
-                      // 出典表示。FAB(右下)と重ならないよう右側に余白を確保し、
-                      // 狭い画面では省略表示にする。
-                      const Positioned(
-                        left: 8,
-                        right: 92,
-                        bottom: 16,
-                        child: _HintPill(text: '出典: JMPSA(日本二輪車普及安全協会)'),
-                      ),
                     ],
                   ),
                 ),
