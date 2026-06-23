@@ -14,6 +14,10 @@ import '../services/spot_repository.dart';
 import '../services/user_preferences.dart';
 import '../theme/app_theme.dart';
 
+// 掲載情報の更新・削除依頼フォーム(Google フォーム)。
+const _updateRequestFormUrl =
+    'https://docs.google.com/forms/d/e/1FAIpQLSc_Hzsky94G4z6XbfXz1lHorXdsilfK76HfIWsNs9fGaIrlcA/viewform?usp=dialog';
+
 /// 駐輪場の詳細画面。
 /// 料金・対応条件・経路案内連携・進入路ストリートビュー・通報をここに集約する。
 ///
@@ -38,6 +42,9 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // 同梱データに詳細が焼き込まれていれば即座に表示(オフラインでも見られる)。
+    if (spot.hasDetails) _detail = JmpsaSpotDetail.fromSpot(spot);
+    // 写真や最新情報を詳細ページから遅延取得して上書きする。
     _loadDetailIfJmpsa();
     // 「最近見た」に記録する(build後にProvider更新するためマイクロタスクで)。
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -76,7 +83,8 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     if (!mounted) return;
     setState(() {
       _loadingDetail = false;
-      _detail = detail;
+      // 取得できたときだけ上書きする(失敗時は焼き込み済みの詳細を残す)。
+      if (detail != null) _detail = detail;
     });
   }
 
@@ -128,10 +136,6 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
           ],
           const SizedBox(height: 16),
           if (spot.streetViewUrl != null) _StreetViewCard(url: spot.streetViewUrl!),
-          if (spot.infoUrl != null) ...[
-            const SizedBox(height: 16),
-            _ReferenceCard(url: spot.infoUrl!),
-          ],
           const SizedBox(height: 28),
           FilledButton.icon(
             onPressed: () => NavigationLauncher().launchTo(
@@ -152,6 +156,22 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             onPressed: () => _showReportDialog(context, repo),
             icon: const Icon(Icons.flag_outlined),
             label: const Text('情報の誤りを報告する'),
+          ),
+          // ページ最下部に外部リンク(JMPSA掲載ページ・更新/削除依頼)をまとめる。
+          if (spot.infoUrl != null) ...[
+            const SizedBox(height: 16),
+            _ReferenceCard(url: spot.infoUrl!),
+          ],
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
+              title: const Text('掲載情報の更新・削除依頼'),
+              subtitle: const Text('フォームから掲載内容の変更・削除を依頼できます'),
+              trailing: const Icon(Icons.open_in_new),
+              onTap: () => launchUrl(Uri.parse(_updateRequestFormUrl),
+                  mode: LaunchMode.externalApplication),
+            ),
           ),
           const SizedBox(height: 24),
           // 最下部のバナー(加工せずそのまま表示)。
@@ -324,8 +344,12 @@ class _JmpsaDetailCard extends StatelessWidget {
     final rows = <({IconData icon, String label, String? value})>[
       (icon: Icons.two_wheeler, label: 'バイク種別', value: detail.bikeType),
       (icon: Icons.do_not_disturb_on_outlined, label: '車両制限', value: detail.vehicleRestriction),
-      (icon: Icons.local_parking, label: '収容台数', value: detail.capacity),
+      (icon: Icons.local_parking, label: '駐車場形態', value: detail.parkingType),
       (icon: Icons.schedule, label: '利用可能時間', value: detail.availableHours),
+      (icon: Icons.confirmation_number_outlined, label: '収容台数', value: detail.capacity),
+      (icon: Icons.call_outlined, label: 'TEL', value: detail.tel),
+      (icon: Icons.business_outlined, label: '管理会社', value: detail.managementCompany),
+      (icon: Icons.update_outlined, label: '最終更新日', value: detail.lastUpdated),
     ].where((r) => r.value != null && r.value!.isNotEmpty).toList();
 
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -465,52 +489,18 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = spot.conditions;
-    // 排気量タグは同梱データ(バイク種別/車両制限から導出済みの範囲)で判定する。
-    final tags = <String>[
-      c.displacementText,
-      if (c.roofed) '屋根あり',
-      if (c.groundLockable) '地球ロック可',
-      if (c.flat) '傾斜なし',
-      if (c.surface != GroundSurface.unknown) _surfaceLabel(c.surface),
-      spot.official ? '公式情報' : 'ユーザー投稿',
-    ];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.place_outlined, size: 20, color: Colors.black54),
-                const SizedBox(width: 8),
-                Expanded(child: Text(spot.address, style: const TextStyle(color: Colors.black87))),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: tags.map((t) => Chip(label: Text(t))).toList(),
-            ),
+            const Icon(Icons.place_outlined, size: 20, color: Colors.black54),
+            const SizedBox(width: 8),
+            Expanded(child: Text(spot.address, style: const TextStyle(color: Colors.black87))),
           ],
         ),
       ),
     );
-  }
-
-  String _surfaceLabel(GroundSurface s) {
-    switch (s) {
-      case GroundSurface.asphalt:
-        return '路面: アスファルト';
-      case GroundSurface.gravel:
-        return '路面: 砂利';
-      case GroundSurface.soil:
-        return '路面: 土';
-      case GroundSurface.unknown:
-        return '路面: 不明';
-    }
   }
 }
 

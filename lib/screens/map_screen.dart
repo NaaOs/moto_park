@@ -269,6 +269,7 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('MotoPark'),
         actions: [
+          // 「管理会社からの情報提供」は一旦非表示(InfoProvisionScreen は残置)。
           IconButton(
             tooltip: '保存した駐輪場',
             icon: const Icon(Icons.favorite_border),
@@ -345,14 +346,6 @@ class _MapScreenState extends State<MapScreen> {
                           tooltip: '現在地',
                           onPressed: _focusOnMyLocation,
                         ),
-                      ),
-                      // 出典表示。FAB(右下)と重ならないよう右側に余白を確保し、
-                      // 狭い画面では省略表示にする。
-                      const Positioned(
-                        left: 8,
-                        right: 92,
-                        bottom: 16,
-                        child: _HintPill(text: '出典: JMPSA(日本二輪車普及安全協会)'),
                       ),
                     ],
                   ),

@@ -107,6 +107,35 @@ void main() {
     expect(detail.info['所在地'], '練馬区練馬1-17-5');
   });
 
+  test('詳細ページからTEL・駐車場形態・料金・管理会社・最終更新日を抽出できる', () {
+    final detail = JmpsaParkingService().parseDetail(_detailFullHtml);
+
+    expect(detail.tel, '03-1234-5678');
+    expect(detail.parkingType, '時間貸');
+    expect(detail.hourlyFee, '当日最大2,000円');
+    expect(detail.managementCompany, 'akippa株式会社');
+    expect(detail.lastUpdated, '2025年9月19日');
+  });
+
+  test('焼き込み済みスポットからJmpsaSpotDetailを再構成できる', () {
+    const spot = ParkingSpot(
+      id: 'jmpsa-1',
+      name: 'テスト駐輪場',
+      address: '東京都新宿区',
+      latitude: 35.0,
+      longitude: 139.0,
+      createdBy: 'jmpsa',
+      details: {'TEL': '03-0000-0000', '管理会社': 'テスト管理'},
+      remarks: 'メモ',
+      reservationUrl: 'https://example.com/r',
+    );
+    final detail = JmpsaSpotDetail.fromSpot(spot);
+    expect(detail.tel, '03-0000-0000');
+    expect(detail.managementCompany, 'テスト管理');
+    expect(detail.remarks, 'メモ');
+    expect(detail.reservationUrl, 'https://example.com/r');
+  });
+
   test('テーブル行が無い詳細ページは空のJmpsaSpotDetailを返す', () {
     final detail = JmpsaParkingService().parseDetail(
       '<div class="p-parking-detail-wrap"><p>準備中</p></div>',
@@ -123,6 +152,18 @@ const _detailInfoHtml = '''
 <tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">利用可能時間</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">24H</td></tr>
 <tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">収容台数</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">44台</td></tr>
 <tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">車両制限</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">排気量50cc以下は不可</td></tr>
+</tbody></table>
+''';
+
+// TEL・駐車場形態・料金（時間貸）・管理会社・最終更新日を含む詳細ページのサンプル。
+const _detailFullHtml = '''
+<table class="p-parking-detail-table"><tbody>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">所在地</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">東京都新宿区西新宿4丁目28-21</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">TEL</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">03-1234-5678</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">駐車場形態</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">時間貸</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">料金（時間貸）</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">当日最大2,000円</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">管理会社</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">akippa株式会社</td></tr>
+<tr class="p-parking-detail-table-tr"><th class="p-parking-detail-table-ttl">最終更新日</th><td class="p-parking-detail-table-txt" style="word-break: break-all;">2025年9月19日</td></tr>
 </tbody></table>
 ''';
 
