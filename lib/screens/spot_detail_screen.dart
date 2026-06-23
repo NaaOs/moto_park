@@ -13,6 +13,7 @@ import '../services/navigation_launcher.dart';
 import '../services/spot_repository.dart';
 import '../services/user_preferences.dart';
 import '../theme/app_theme.dart';
+import 'update_request_screen.dart';
 
 /// 駐輪場の詳細画面。
 /// 料金・対応条件・経路案内連携・進入路ストリートビュー・通報をここに集約する。
@@ -38,6 +39,9 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // 同梱データに詳細が焼き込まれていれば即座に表示(オフラインでも見られる)。
+    if (spot.hasDetails) _detail = JmpsaSpotDetail.fromSpot(spot);
+    // 写真や最新情報を詳細ページから遅延取得して上書きする。
     _loadDetailIfJmpsa();
     // 「最近見た」に記録する(build後にProvider更新するためマイクロタスクで)。
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -76,7 +80,8 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     if (!mounted) return;
     setState(() {
       _loadingDetail = false;
-      _detail = detail;
+      // 取得できたときだけ上書きする(失敗時は焼き込み済みの詳細を残す)。
+      if (detail != null) _detail = detail;
     });
   }
 
@@ -132,6 +137,19 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             const SizedBox(height: 16),
             _ReferenceCard(url: spot.infoUrl!),
           ],
+          const SizedBox(height: 16),
+          // 掲載情報の更新・削除依頼ページへ遷移する。
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
+              title: const Text('掲載情報の更新・削除依頼'),
+              subtitle: const Text('閉鎖・内容変更などの依頼方法をご案内します'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => UpdateRequestScreen(spot: spot)),
+              ),
+            ),
+          ),
           const SizedBox(height: 28),
           FilledButton.icon(
             onPressed: () => NavigationLauncher().launchTo(
@@ -324,8 +342,12 @@ class _JmpsaDetailCard extends StatelessWidget {
     final rows = <({IconData icon, String label, String? value})>[
       (icon: Icons.two_wheeler, label: 'バイク種別', value: detail.bikeType),
       (icon: Icons.do_not_disturb_on_outlined, label: '車両制限', value: detail.vehicleRestriction),
-      (icon: Icons.local_parking, label: '収容台数', value: detail.capacity),
+      (icon: Icons.local_parking, label: '駐車場形態', value: detail.parkingType),
       (icon: Icons.schedule, label: '利用可能時間', value: detail.availableHours),
+      (icon: Icons.confirmation_number_outlined, label: '収容台数', value: detail.capacity),
+      (icon: Icons.call_outlined, label: 'TEL', value: detail.tel),
+      (icon: Icons.business_outlined, label: '管理会社', value: detail.managementCompany),
+      (icon: Icons.update_outlined, label: '最終更新日', value: detail.lastUpdated),
     ].where((r) => r.value != null && r.value!.isNotEmpty).toList();
 
     if (rows.isEmpty) return const SizedBox.shrink();

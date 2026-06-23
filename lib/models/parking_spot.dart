@@ -157,6 +157,13 @@ class ParkingSpot {
   final String createdBy;
   final DateTime? createdAt;
 
+  /// JMPSA詳細ページの各項目(ラベル→値)。harvest時に焼き込む。
+  /// 例: TEL / 駐車場形態 / 利用可能時間 / 料金（時間貸） / 収容台数 /
+  ///     車両制限 / バイク種別 / 管理会社 / 最終更新日。
+  final Map<String, String> details;
+  final String remarks; // 備考(予約案内文など)
+  final String? reservationUrl; // 予約サービス(akippa/特P等)のURL
+
   const ParkingSpot({
     required this.id,
     required this.name,
@@ -175,11 +182,33 @@ class ParkingSpot {
     this.reportCount = 0,
     required this.createdBy,
     this.createdAt,
+    this.details = const {},
+    this.remarks = '',
+    this.reservationUrl,
   });
 
   /// 予約が必要かどうか。JMPSAデータでは予約制の施設名が「【予約制：◯◯】」で
   /// 始まるため、名称から判定する(akippa・特P・いつでもニリーン等)。
   bool get requiresReservation => name.contains('予約制');
+
+  // ── JMPSA詳細項目へのアクセサ(無ければ null) ──
+  String? get tel => _detail('TEL');
+  String? get parkingType => _detail('駐車場形態'); // 駐車場形態(時間貸 等)
+  String? get availableHours => _detail('利用可能時間');
+  String? get hourlyFee => _detail('料金（時間貸）');
+  String? get capacity => _detail('収容台数');
+  String? get vehicleRestriction => _detail('車両制限');
+  String? get bikeType => _detail('バイク種別'); // 対応するバイクのサイズ区分
+  String? get managementCompany => _detail('管理会社');
+  String? get lastUpdated => _detail('最終更新日');
+
+  /// 焼き込み済みの詳細情報を持っているか(詳細カードの表示判定に使う)。
+  bool get hasDetails => details.isNotEmpty || remarks.isNotEmpty || reservationUrl != null;
+
+  String? _detail(String key) {
+    final v = details[key];
+    return (v == null || v.isEmpty) ? null : v;
+  }
 
   factory ParkingSpot.fromJson(Map<String, dynamic> json) {
     return ParkingSpot(
@@ -200,6 +229,9 @@ class ParkingSpot {
       reportCount: (json['reportCount'] as num?)?.toInt() ?? 0,
       createdBy: json['createdBy'] as String? ?? '',
       createdAt: json['createdAt'] == null ? null : DateTime.parse(json['createdAt'] as String),
+      details: (json['details'] as Map?)?.map((k, v) => MapEntry(k as String, v as String)) ?? const {},
+      remarks: json['remarks'] as String? ?? '',
+      reservationUrl: json['reservationUrl'] as String?,
     );
   }
 
@@ -221,6 +253,10 @@ class ParkingSpot {
         'reportCount': reportCount,
         'createdBy': createdBy,
         'createdAt': createdAt?.toIso8601String(),
+        // サイズ削減のため空の項目は出力しない。
+        if (details.isNotEmpty) 'details': details,
+        if (remarks.isNotEmpty) 'remarks': remarks,
+        if (reservationUrl != null) 'reservationUrl': reservationUrl,
       };
 
   ParkingSpot copyWith({
@@ -245,6 +281,9 @@ class ParkingSpot {
       reportCount: reportCount ?? this.reportCount,
       createdBy: createdBy,
       createdAt: createdAt,
+      details: details,
+      remarks: remarks,
+      reservationUrl: reservationUrl,
     );
   }
 }

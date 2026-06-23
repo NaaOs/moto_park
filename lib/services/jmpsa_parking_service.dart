@@ -21,11 +21,23 @@ class JmpsaSpotDetail {
     this.info = const {},
   });
 
+  /// 同梱データ(harvest時に焼き込んだ ParkingSpot.details)から詳細を組み立てる。
+  /// 写真は遅延取得でのみ得られるため空にする(必要時にネットワークから上書きする)。
+  factory JmpsaSpotDetail.fromSpot(ParkingSpot spot) => JmpsaSpotDetail(
+        remarks: spot.remarks,
+        reservationUrl: spot.reservationUrl,
+        info: spot.details,
+      );
+
   String? get bikeType => info['バイク種別']; // 対応するバイクのサイズ区分(50cc以下 等)
   String? get parkingType => info['駐車場形態']; // 種別(時間貸 等)
   String? get availableHours => info['利用可能時間'];
   String? get capacity => info['収容台数'];
   String? get vehicleRestriction => info['車両制限'];
+  String? get tel => info['TEL'];
+  String? get hourlyFee => info['料金（時間貸）'];
+  String? get managementCompany => info['管理会社'];
+  String? get lastUpdated => info['最終更新日'];
 
   bool get isEmpty =>
       remarks.isEmpty && reservationUrl == null && photoUrls.isEmpty && info.isEmpty;
