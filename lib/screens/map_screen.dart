@@ -17,7 +17,6 @@ import '../services/spot_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/filter_sheet.dart';
 import 'add_spot_screen.dart';
-import 'info_provision_screen.dart';
 import 'saved_screen.dart';
 import 'spot_detail_screen.dart';
 
@@ -270,13 +269,7 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('MotoPark'),
         actions: [
-          IconButton(
-            tooltip: '管理会社からの情報提供',
-            icon: const Icon(Icons.campaign_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const InfoProvisionScreen()),
-            ),
-          ),
+          // 「管理会社からの情報提供」は一旦非表示(InfoProvisionScreen は残置)。
           IconButton(
             tooltip: '保存した駐輪場',
             icon: const Icon(Icons.favorite_border),

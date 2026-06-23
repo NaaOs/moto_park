@@ -13,7 +13,10 @@ import '../services/navigation_launcher.dart';
 import '../services/spot_repository.dart';
 import '../services/user_preferences.dart';
 import '../theme/app_theme.dart';
-import 'update_request_screen.dart';
+
+// 掲載情報の更新・削除依頼フォーム(Google フォーム)。
+const _updateRequestFormUrl =
+    'https://docs.google.com/forms/d/e/1FAIpQLSc_Hzsky94G4z6XbfXz1lHorXdsilfK76HfIWsNs9fGaIrlcA/viewform?usp=dialog';
 
 /// 駐輪場の詳細画面。
 /// 料金・対応条件・経路案内連携・進入路ストリートビュー・通報をここに集約する。
@@ -164,11 +167,10 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             child: ListTile(
               leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
               title: const Text('掲載情報の更新・削除依頼'),
-              subtitle: const Text('閉鎖・内容変更などの依頼方法をご案内します'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => UpdateRequestScreen(spot: spot)),
-              ),
+              subtitle: const Text('フォームから掲載内容の変更・削除を依頼できます'),
+              trailing: const Icon(Icons.open_in_new),
+              onTap: () => launchUrl(Uri.parse(_updateRequestFormUrl),
+                  mode: LaunchMode.externalApplication),
             ),
           ),
           const SizedBox(height: 24),
@@ -487,52 +489,18 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = spot.conditions;
-    // 排気量タグは同梱データ(バイク種別/車両制限から導出済みの範囲)で判定する。
-    final tags = <String>[
-      c.displacementText,
-      if (c.roofed) '屋根あり',
-      if (c.groundLockable) '地球ロック可',
-      if (c.flat) '傾斜なし',
-      if (c.surface != GroundSurface.unknown) _surfaceLabel(c.surface),
-      spot.official ? '公式情報' : 'ユーザー投稿',
-    ];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.place_outlined, size: 20, color: Colors.black54),
-                const SizedBox(width: 8),
-                Expanded(child: Text(spot.address, style: const TextStyle(color: Colors.black87))),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: tags.map((t) => Chip(label: Text(t))).toList(),
-            ),
+            const Icon(Icons.place_outlined, size: 20, color: Colors.black54),
+            const SizedBox(width: 8),
+            Expanded(child: Text(spot.address, style: const TextStyle(color: Colors.black87))),
           ],
         ),
       ),
     );
-  }
-
-  String _surfaceLabel(GroundSurface s) {
-    switch (s) {
-      case GroundSurface.asphalt:
-        return '路面: アスファルト';
-      case GroundSurface.gravel:
-        return '路面: 砂利';
-      case GroundSurface.soil:
-        return '路面: 土';
-      case GroundSurface.unknown:
-        return '路面: 不明';
-    }
   }
 }
 
