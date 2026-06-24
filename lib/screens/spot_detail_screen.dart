@@ -173,9 +173,6 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   mode: LaunchMode.externalApplication),
             ),
           ),
-          const SizedBox(height: 24),
-          // 最下部のバナー(加工せずそのまま表示)。
-          Center(child: Image.asset('assets/banner.png')),
         ],
       ),
     );

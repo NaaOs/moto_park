@@ -104,8 +104,6 @@ flutter:
     - assets/seed_spots.json
     # JMPSAから一括取得した全国の時間貸し駐輪場データ(tool/harvest_jmpsa.dartで生成)
     - assets/jmpsa_spots.json
-    # 駐輪場詳細ページ下部に表示するバナー画像
-    - assets/banner.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
