@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/parking_spot.dart';
 
-/// JMPSAの駐車場詳細ページから追加取得する情報。
+/// 駐車場詳細ページから追加取得する情報。
 /// 予約先URL・備考・写真に加え、詳細テーブルの各項目(収容台数・車両制限など)を保持する。
 class JmpsaSpotDetail {
   final String remarks; // 備考(予約案内文など)
@@ -43,10 +43,10 @@ class JmpsaSpotDetail {
       remarks.isEmpty && reservationUrl == null && photoUrls.isEmpty && info.isEmpty;
 }
 
-/// JMPSA(日本二輪車普及安全協会)の駐車場検索(https://www.jmpsa.or.jp/society/parking/)から
+/// 提携データ提供元の駐車場検索(https://www.jmpsa.or.jp/society/parking/)から
 /// 現在地周辺の時間貸し駐輪場を動的に取得するサービス。
 ///
-/// JMPSAの「現在地から検索」機能と同じエンドポイント(location.php)を利用し、
+/// 提携データの「現在地から検索」機能と同じエンドポイント(location.php)を利用し、
 /// 返却されるHTMLから施設名・住所・緯度経度・料金・定休日を抽出する。
 class JmpsaParkingService {
   static const _baseUrl = 'https://www.jmpsa.or.jp';
@@ -59,7 +59,7 @@ class JmpsaParkingService {
   // 時間貸し(types=1)のみを対象とする。
   static const _typesHourly = '1';
 
-  /// Web かつプロキシ設定済みのときだけ、JMPSAへのリクエストをプロキシ経由にする。
+  /// Web かつプロキシ設定済みのときだけ、データ提供元へのリクエストをプロキシ経由にする。
   /// 画像表示(Image.network)はブラウザの<img>で直接読めるため対象外。
   static String _proxied(String url) {
     if (!kIsWeb || _proxyBase.isEmpty) return url;
@@ -96,7 +96,7 @@ class JmpsaParkingService {
   // 駐車場写真(/prg_img/img/xxx.jpg)。
   static final _photoPattern = RegExp(r'/prg_img/img/[^"' "'" r']+\.(?:jpg|jpeg|png)', caseSensitive: false);
 
-  /// 指定した緯度経度の周辺にある時間貸し駐輪場をJMPSAから取得する。
+  /// 指定した緯度経度の周辺にある時間貸し駐輪場をデータ提供元から取得する。
   /// 通信失敗・解析失敗時は空リストを返す(オフライン時はローカルデータのみ表示)。
   Future<List<ParkingSpot>> fetchNearby({
     required double latitude,
@@ -176,7 +176,7 @@ class JmpsaParkingService {
     );
   }
 
-  /// JMPSAのlocation.php/area*.htmlのレスポンスHTMLから駐車場一覧を抽出する。
+  /// location.php/area*.htmlのレスポンスHTMLから駐車場一覧を抽出する。
   /// テストや解析確認のため公開メソッドとしている。
   List<ParkingSpot> parseHtml(String html) {
     final spots = <ParkingSpot>[];

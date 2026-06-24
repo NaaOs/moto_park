@@ -1,7 +1,7 @@
-// JMPSA(www.jmpsa.or.jp) 用の CORS プロキシ (Cloudflare Worker)。
+// データ提供元(www.jmpsa.or.jp) 用の CORS プロキシ (Cloudflare Worker)。
 //
-// Web公開時、ブラウザは JMPSA へ直接 fetch できない(CORSヘッダーが無いため)。
-// この Worker が JMPSA へ中継し Access-Control-Allow-Origin を付けて返すことで、
+// Web公開時、ブラウザはデータ提供元へ直接 fetch できない(CORSヘッダーが無いため)。
+// この Worker が中継し Access-Control-Allow-Origin を付けて返すことで、
 // 公開Web版でもライブ取得(location.php)と詳細取得(備考/予約URL)が動くようになる。
 //
 // ▼ デプロイ手順(Cloudflareダッシュボード・CLI不要):
@@ -44,7 +44,7 @@ export default {
     }
 
     const headers = new Headers(corsHeaders(allowOrigin));
-    // JMPSAの一部エンドポイントは Content-Type が不正(末尾;)なので正規化する。
+    // 一部エンドポイントは Content-Type が不正(末尾;)なので正規化する。
     const ct = upstream.headers.get('content-type') || '';
     if (ct.includes('text/html')) {
       headers.set('content-type', 'text/html; charset=utf-8');

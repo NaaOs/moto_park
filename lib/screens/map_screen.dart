@@ -24,7 +24,7 @@ import 'spot_detail_screen.dart';
 /// Windows では flutter_map(OpenStreetMap) を使用し、
 /// Web では google_maps_flutter を使用する。
 ///
-/// 全国JMPSAデータ(4〜5万件)を同梱しているため、地図には「表示領域内」かつ
+/// 全国の駐輪場データ(4〜5万件)を同梱しているため、地図には「表示領域内」かつ
 /// 「一定ズーム以上」のマーカーのみを描画し、最大件数で打ち切ることで
 /// 描画負荷を抑える(ビューポートカリング)。
 class MapScreen extends StatefulWidget {
@@ -336,7 +336,7 @@ class _MapScreenState extends State<MapScreen> {
                           bottom: 110,
                           left: 0,
                           right: 0,
-                          child: Center(child: _LoadingPill(text: 'JMPSAから最新情報を取得中…')),
+                          child: Center(child: _LoadingPill(text: '最新情報を取得中…')),
                         ),
                       Positioned(
                         bottom: 16,

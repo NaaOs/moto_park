@@ -21,7 +21,7 @@ const _updateRequestFormUrl =
 /// 駐輪場の詳細画面。
 /// 料金・対応条件・経路案内連携・進入路ストリートビュー・通報をここに集約する。
 ///
-/// JMPSA由来のスポットは、開いたときに詳細ページを遅延取得して
+/// 同梱データ由来のスポットは、開いたときに詳細ページを遅延取得して
 /// 備考(予約案内・予約URL)と写真を追加表示する。
 class SpotDetailScreen extends StatefulWidget {
   const SpotDetailScreen({super.key, required this.spot});
@@ -157,7 +157,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             icon: const Icon(Icons.flag_outlined),
             label: const Text('情報の誤りを報告する'),
           ),
-          // ページ最下部に外部リンク(JMPSA掲載ページ・更新/削除依頼)をまとめる。
+          // ページ最下部に外部リンク(掲載元ページ・更新/削除依頼)をまとめる。
           if (spot.infoUrl != null) ...[
             const SizedBox(height: 16),
             _ReferenceCard(url: spot.infoUrl!),
@@ -329,7 +329,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   }
 }
 
-/// JMPSA詳細ページの項目(バイク種別・車両制限・収容台数・利用可能時間)を表示するカード。
+/// 詳細ページの項目(バイク種別・車両制限・収容台数・利用可能時間)を表示するカード。
 /// 値が取得できた項目のみ表示し、何も無ければ表示しない。
 class _JmpsaDetailCard extends StatelessWidget {
   const _JmpsaDetailCard({required this.detail});
@@ -528,7 +528,7 @@ class _ReferenceCard extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.fact_check_outlined, size: 30, color: AppTheme.accent),
-        title: const Text('JMPSAで最新の駐車場情報を確認'),
+        title: const Text('最新の駐車場情報を確認'),
         subtitle: const Text('料金・営業時間は現状と異なる場合があります'),
         trailing: const Icon(Icons.open_in_new),
         onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),

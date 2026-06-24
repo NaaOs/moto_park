@@ -7,15 +7,15 @@ import '../theme/app_theme.dart';
 
 /// 掲載情報の「更新・削除依頼」案内ページ。
 ///
-/// 当アプリの駐輪場データはJMPSA(日本二輪車普及安全協会)および各管理会社が
+/// 当アプリの駐輪場データは提携する情報元および各管理会社が
 /// 掲載・運営している。情報の変更・閉鎖・削除の依頼は、原則として
-/// 管理会社へ直接連絡するか、JMPSAの掲載内容変更フォームから行う。
+/// 管理会社へ直接連絡するか、掲載内容変更フォームから行う。
 class UpdateRequestScreen extends StatelessWidget {
   const UpdateRequestScreen({super.key, required this.spot});
 
   final ParkingSpot spot;
 
-  // JMPSA「掲載依頼・掲載内容の変更」窓口。
+  // 「掲載依頼・掲載内容の変更」窓口。
   static const _changeFormUrl = 'https://www.jmpsa.or.jp/contact/form/index_18.html';
 
   Future<void> _open(String url) =>
@@ -76,16 +76,16 @@ class UpdateRequestScreen extends StatelessWidget {
           if (company == null && tel == null)
             const Text(
               '※ この駐輪場には管理会社・電話番号の掲載がありません。'
-              '下記のJMPSA窓口からご依頼ください。',
+              '下記の窓口からご依頼ください。',
               style: TextStyle(color: Colors.black54),
             ),
 
           const SizedBox(height: 24),
-          // ── JMPSA窓口 ──
-          const _SectionTitle(icon: Icons.mark_email_read_outlined, text: '② JMPSAの窓口から依頼する'),
+          // ── 運営窓口 ──
+          const _SectionTitle(icon: Icons.mark_email_read_outlined, text: '② 運営窓口から依頼する'),
           const SizedBox(height: 8),
           const Text(
-            '掲載内容の変更・駐輪場の削除(閉鎖)依頼は、JMPSAの「掲載依頼・掲載内容の変更」'
+            '掲載内容の変更・駐輪場の削除(閉鎖)依頼は、「掲載依頼・掲載内容の変更」'
             'フォームから受け付けています。',
             style: TextStyle(height: 1.5),
           ),
@@ -105,7 +105,7 @@ class UpdateRequestScreen extends StatelessWidget {
               style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
               onPressed: () => _open(spot.infoUrl!),
               icon: const Icon(Icons.fact_check_outlined),
-              label: const Text('この駐輪場のJMPSA掲載ページを開く'),
+              label: const Text('この駐輪場の掲載ページを開く'),
             ),
           ],
 

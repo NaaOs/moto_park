@@ -6,13 +6,13 @@ import '../theme/app_theme.dart';
 /// 「管理会社からの情報提供」案内ページ。
 ///
 /// 駐輪場の管理会社・運営者が、新規掲載や情報提供を行うための窓口を案内する。
-/// 掲載・情報提供はJMPSA(日本二輪車普及安全協会)が受け付けている。
+/// 掲載・情報提供は運営窓口が受け付けている。
 class InfoProvisionScreen extends StatelessWidget {
   const InfoProvisionScreen({super.key});
 
-  // JMPSA「バイク駐車場の掲載依頼」ページ。
+  // 「バイク駐車場の掲載依頼」ページ。
   static const _registerUrl = 'https://www.jmpsa.or.jp/society/parking/register.html';
-  // JMPSA「掲載依頼・掲載内容の変更」フォーム。
+  // 「掲載依頼・掲載内容の変更」フォーム。
   static const _contactUrl = 'https://www.jmpsa.or.jp/contact/form/index_18.html';
 
   Future<void> _open(String url) =>
@@ -46,10 +46,10 @@ class InfoProvisionScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const Text(
-            'MotoPark に掲載している駐輪場情報は、JMPSA(日本二輪車普及安全協会)の'
+            'MotoPark に掲載している駐輪場情報は、提携する情報元の'
             '全国バイク駐車場案内をもとにしています。\n\n'
             '新しいバイク駐輪場の掲載や、運営する駐輪場の情報提供をご希望の場合は、'
-            'JMPSA の窓口より受け付けています。下記からお手続きください。',
+            '運営窓口より受け付けています。下記からお手続きください。',
             style: TextStyle(height: 1.6),
           ),
           const SizedBox(height: 24),
@@ -77,16 +77,9 @@ class InfoProvisionScreen extends StatelessWidget {
               border: const Border(left: BorderSide(color: Color(0xFF3A9D5D), width: 4)),
             ),
             child: const Text(
-              'ご提供いただいた情報は、JMPSA による確認のうえで掲載されます。'
+              'ご提供いただいた情報は、運営側の確認のうえで掲載されます。'
               '掲載までにお時間をいただく場合があります。',
               style: TextStyle(height: 1.5, color: Colors.black87),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Center(
-            child: Text(
-              '出典: JMPSA(日本二輪車普及安全協会)',
-              style: TextStyle(fontSize: 12, color: Colors.black45),
             ),
           ),
         ],
