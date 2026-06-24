@@ -5,7 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/parking_spot.dart';
 
-/// harvest 済みの全国JMPSA駐輪場データ(assets/jmpsa_spots.json)を
+/// harvest 済みの全国駐輪場データ(assets/jmpsa_spots.json)を
 /// 読み取り専用でメモリにロードするデータセット。
 ///
 /// 約3.9万件・24MB規模のため SharedPreferences には保存せず、起動時に

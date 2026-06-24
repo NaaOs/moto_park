@@ -1,4 +1,4 @@
-// JMPSA(日本二輪車普及安全協会)の全国バイク駐車場案内から、
+// 提携データ提供元の全国バイク駐車場案内から、
 // 全47都道府県の時間貸し駐輪場データを一括取得し、
 // assets/jmpsa_spots.json にまとめて書き出すワンタイムのharvestスクリプト。
 //
@@ -76,7 +76,7 @@ Future<void> main() async {
       for (final s in _service.parseHtml(html)) {
         all.putIfAbsent(s.id, () => s);
       }
-      // JMPSAサーバーへの配慮としてページ間に小休止を入れる。
+      // 提供元サーバーへの配慮としてページ間に小休止を入れる。
       await Future.delayed(const Duration(milliseconds: 120));
     }
     await _log(

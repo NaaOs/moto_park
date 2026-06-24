@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:motopark/models/parking_spot.dart';
 import 'package:motopark/services/jmpsa_parking_service.dart';
 
-// JMPSA(https://www.jmpsa.or.jp/society/parking/location.php)の
+// データ提供元(https://www.jmpsa.or.jp/society/parking/location.php)の
 // 実際のレスポンスHTMLから抜粋した2件分のサンプル。
 const _sampleHtml = '''
 <ul class="p-parking-prefecture-list" id="js-parking-list">
@@ -56,7 +56,7 @@ const _sampleHtml = '''
 ''';
 
 void main() {
-  test('JMPSAのlocation.php応答HTMLから駐車場一覧を抽出できる', () {
+  test('location.php応答HTMLから駐車場一覧を抽出できる', () {
     final spots = JmpsaParkingService().parseHtml(_sampleHtml);
 
     expect(spots.length, 2);
@@ -167,7 +167,7 @@ const _detailFullHtml = '''
 </tbody></table>
 ''';
 
-// JMPSAの予約制駐車場の詳細ページから抜粋したサンプル(写真は重複ありで掲載される)。
+// 予約制駐車場の詳細ページから抜粋したサンプル(写真は重複ありで掲載される)。
 const _detailHtml = '''
 <div class="p-parking-detail-wrap">
 <p class="p-parking-detail-img"><img src="/prg_img/img/40540de5201ecb26036a43d2e9f213ef01.jpg" alt=""></p>

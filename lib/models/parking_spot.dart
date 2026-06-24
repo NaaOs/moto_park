@@ -1,7 +1,7 @@
 /// 路面状況。土・砂利はスタンドが沈んで転倒するリスクがあるためライダーには重要な情報。
 enum GroundSurface { asphalt, gravel, soil, unknown }
 
-/// 料金区分。JMPSA(日本二輪車普及安全協会)の駐車場検索が採用する区分に合わせる。
+/// 料金区分。提携データの駐車場検索が採用する区分に合わせる。
 /// 本アプリでは「時間貸し」のみを地図に表示する。
 enum PricingType { hourly, monthly }
 
@@ -30,7 +30,7 @@ PricingType pricingTypeFromString(String? value) {
 String pricingTypeToString(PricingType type) => type.name;
 
 /// バイク種別・車両制限の文言から、駐輪可能な排気量範囲(下限min・上限max, 0=制限なし)を導く。
-/// JMPSAの「バイク種別」(例:125cc以下)を優先し、無ければ「車両制限」の文章から抽出する。
+/// 「バイク種別」(例:125cc以下)を優先し、無ければ「車両制限」の文章から抽出する。
 ({int min, int max}) deriveDisplacementRange({String? bikeType, String? vehicleRestriction}) {
   final bt = bikeType?.trim();
   if (bt != null && bt.isNotEmpty) {
@@ -149,7 +149,7 @@ class ParkingSpot {
   final PricingType pricingType; // 時間貸し / 月極(本アプリは時間貸しのみ表示)
   final String feeDescription; // 料金の説明(例: 100円/60分)
   final String closedDays; // 定休日・休業情報(例: なし(年中無休))
-  final String? infoUrl; // 詳細情報の参照元(JMPSAの駐車場検索など)
+  final String? infoUrl; // 詳細情報の参照元(提携データの駐車場検索など)
   final List<String> photoUrls;
   final String? streetViewUrl; // 進入路確認用
   final SpotStatus status;
@@ -157,7 +157,7 @@ class ParkingSpot {
   final String createdBy;
   final DateTime? createdAt;
 
-  /// JMPSA詳細ページの各項目(ラベル→値)。harvest時に焼き込む。
+  /// 詳細ページの各項目(ラベル→値)。harvest時に焼き込む。
   /// 例: TEL / 駐車場形態 / 利用可能時間 / 料金（時間貸） / 収容台数 /
   ///     車両制限 / バイク種別 / 管理会社 / 最終更新日。
   final Map<String, String> details;
@@ -187,11 +187,11 @@ class ParkingSpot {
     this.reservationUrl,
   });
 
-  /// 予約が必要かどうか。JMPSAデータでは予約制の施設名が「【予約制：◯◯】」で
+  /// 予約が必要かどうか。データ上、予約制の施設名が「【予約制：◯◯】」で
   /// 始まるため、名称から判定する(akippa・特P・いつでもニリーン等)。
   bool get requiresReservation => name.contains('予約制');
 
-  // ── JMPSA詳細項目へのアクセサ(無ければ null) ──
+  // ── 詳細項目へのアクセサ(無ければ null) ──
   String? get tel => _detail('TEL');
   String? get parkingType => _detail('駐車場形態'); // 駐車場形態(時間貸 等)
   String? get availableHours => _detail('利用可能時間');

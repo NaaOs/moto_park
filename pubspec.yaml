@@ -52,7 +52,7 @@ dependencies:
   # 駐輪場の共有(Web Share API / 各OSの共有シート。失敗時はクリップボードへフォールバック)
   share_plus: ^10.1.4
 
-  # JMPSA(日本二輪車普及安全協会)の駐車場検索から最新データを動的取得する
+  # 提携データ提供元の駐車場検索から最新データを動的取得する
   http: ^1.2.2
 
   # State management
@@ -102,7 +102,7 @@ flutter:
   # 初回起動時に読み込むサンプル駐輪場データ
   assets:
     - assets/seed_spots.json
-    # JMPSAから一括取得した全国の時間貸し駐輪場データ(tool/harvest_jmpsa.dartで生成)
+    # 一括取得した全国の時間貸し駐輪場データ(tool/harvest_jmpsa.dartで生成)
     - assets/jmpsa_spots.json
 
   # An image asset can refer to one or more resolution-specific "variants", see

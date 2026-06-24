@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#1A6B66",
     "theme_color": "#1A6B66",
-    "description": "全国のバイク駐輪場(時間貸し)を地図で探せるアプリ。JMPSAの全国データに対応。",
+    "description": "全国のバイク駐輪場(時間貸し)を地図で探せるアプリ。全国データに対応。",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
