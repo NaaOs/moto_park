@@ -394,6 +394,9 @@ class _MapScreenState extends State<MapScreen> {
       compassEnabled: false,
       rotateGesturesEnabled: false,
       mapToolbarEnabled: false,
+      // Web版で右下(現在地ボタンの下)に出る標準のカメラコントロールを非表示にする
+      // (既定でtrueのため明示的にfalseにする)。
+      webCameraControlEnabled: false,
       // フィルタ表示中はマーカーを描画しない = ピンのタップ遷移を防ぐ。
       markers: interactive
           ? spots
