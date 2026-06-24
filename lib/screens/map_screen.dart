@@ -293,7 +293,10 @@ class _MapScreenState extends State<MapScreen> {
           return Stack(
             children: [
               // 地図は画面全体に表示し、操作UIだけ SafeArea 内に収める(ノッチ対応)。
-              // フィルタ表示中は地図への操作を無効化(Web/プラットフォームビュー対策)。
+              // フィルタ表示中は地図操作を無効化する。Windows(flutter_map)は純Flutter
+              // ウィジェットなので IgnorePointer が効く。Webの Google Maps はDOM要素
+              // (プラットフォームビュー)で IgnorePointer が効かないため、_buildGoogleMap
+              // 側でジェスチャー無効化とマーカー除去を行っている。
               IgnorePointer(
                 ignoring: _filterOpen,
                 child: _useDesktopMap ? _buildFlutterMap(spots) : _buildGoogleMap(spots),
@@ -361,6 +364,11 @@ class _MapScreenState extends State<MapScreen> {
   // ── Google Maps (Web) ─────────────────────────────────────────────────────
 
   Widget _buildGoogleMap(List<ParkingSpot> spots) {
+    // Web版の Google Maps はプラットフォームビュー(DOM要素)で描画されるため、
+    // 上に重ねた Flutter の IgnorePointer では地図への操作を止められない
+    // (ブラウザのタッチが地図JSへ直接届く)。フィルタ表示中は地図自身の
+    // ジェスチャーを無効化し、マーカーも外して「パン」「ピンのタップ遷移」を防ぐ。
+    final interactive = !_filterOpen;
     return GoogleMap(
       initialCameraPosition: const CameraPosition(target: _defaultCenter, zoom: 14),
       onMapCreated: (c) {
@@ -374,23 +382,35 @@ class _MapScreenState extends State<MapScreen> {
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
       // Webで指1本でも地図を動かせるようにする(既定のcooperativeは2本指必須)。
-      webGestureHandling: WebGestureHandling.greedy,
+      // フィルタ表示中は none にして地図JSへタッチが渡らないようにする。
+      webGestureHandling:
+          interactive ? WebGestureHandling.greedy : WebGestureHandling.none,
+      // フィルタ表示中はパン/ズーム等を無効化(IgnorePointerはWebでは効かないため)。
+      scrollGesturesEnabled: interactive,
+      zoomGesturesEnabled: interactive,
+      tiltGesturesEnabled: interactive,
       // 標準のズームボタン・方向(コンパス)ボタン・ツールバーを非表示にする。
       zoomControlsEnabled: false,
       compassEnabled: false,
       rotateGesturesEnabled: false,
       mapToolbarEnabled: false,
-      markers: spots
-          .map((spot) => Marker(
-                markerId: MarkerId(spot.id),
-                position: LatLng(spot.latitude, spot.longitude),
-                icon: BitmapDescriptor.defaultMarkerWithHue(
-                  spot.official ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueViolet,
-                ),
-                infoWindow: InfoWindow(title: spot.name, snippet: spot.feeDescription),
-                onTap: () => _openDetail(spot),
-              ))
-          .toSet(),
+      // Web版で右下(現在地ボタンの下)に出る標準のカメラコントロールを非表示にする
+      // (既定でtrueのため明示的にfalseにする)。
+      webCameraControlEnabled: false,
+      // フィルタ表示中はマーカーを描画しない = ピンのタップ遷移を防ぐ。
+      markers: interactive
+          ? spots
+              .map((spot) => Marker(
+                    markerId: MarkerId(spot.id),
+                    position: LatLng(spot.latitude, spot.longitude),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                      spot.official ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueViolet,
+                    ),
+                    infoWindow: InfoWindow(title: spot.name, snippet: spot.feeDescription),
+                    onTap: () => _openDetail(spot),
+                  ))
+              .toSet()
+          : const <Marker>{},
     );
   }
 
