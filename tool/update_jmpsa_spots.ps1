@@ -44,13 +44,16 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $logFile = Join-Path $logDir "update-$stamp.log"
 
+# 進捗はホスト(コンソール/標準出力)へ出す。Write-Output だと関数の戻り値ストリームを
+# 汚し、Invoke-Step の戻り値が配列化して終了コード判定を誤るため使わない。
 function Log([string]$msg) {
   $line = '{0}  {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $msg
-  Write-Output $line
+  Write-Host $line
   Add-Content -LiteralPath $logFile -Value $line -Encoding utf8
 }
 
-# dart の出力をログへ追記する(全ストリームをファイルへ。stderr でも停止しない)。
+# dart の出力をログへ追記して終了コードを返す(全ストリームをファイルへ。stderr でも停止しない)。
+# ※ 成功ストリームへ余計な値を出さないこと(戻り値が配列化し判定を誤るため)。
 function Invoke-Step([string]$exe, [string[]]$dartArgs) {
   Log ("RUN: {0} {1}" -f $exe, ($dartArgs -join ' '))
   & $exe @dartArgs *>> $logFile

@@ -1,9 +1,14 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../models/parking_spot.dart';
+
+/// Web判定(Flutter非依存)。flutter/foundation の kIsWeb を import すると
+/// dart:ui を引き込み、tool/ の harvest スクリプトを純粋な `dart run` で
+/// 実行できなくなるため、Flutterと同じ定義を自前で持つ。
+/// ライブラリ非公開にして、利用側(map_screen 等)の flutter 由来 kIsWeb と衝突させない。
+const bool _kIsWeb = bool.fromEnvironment('dart.library.js_util');
 
 /// 駐車場詳細ページから追加取得する情報。
 /// 予約先URL・備考・写真に加え、詳細テーブルの各項目(収容台数・車両制限など)を保持する。
@@ -62,7 +67,7 @@ class JmpsaParkingService {
   /// Web かつプロキシ設定済みのときだけ、データ提供元へのリクエストをプロキシ経由にする。
   /// 画像表示(Image.network)はブラウザの<img>で直接読めるため対象外。
   static String _proxied(String url) {
-    if (!kIsWeb || _proxyBase.isEmpty) return url;
+    if (!_kIsWeb || _proxyBase.isEmpty) return url;
     if (url.startsWith(_baseUrl)) return '$_proxyBase${url.substring(_baseUrl.length)}';
     return url;
   }
