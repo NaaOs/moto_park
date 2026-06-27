@@ -47,6 +47,10 @@ app.*.map.json
 # Nested platform build outputs
 **/build/
 
+# jmpsa_spots 更新ジョブ(tool/update_jmpsa_spots.ps1)の生成物
+tool/logs/
+tool/backup/
+
 # wrangler files
 .wrangler
 .dev.vars*
