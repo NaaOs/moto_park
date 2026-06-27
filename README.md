@@ -57,7 +57,7 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
   [`tool/harvest_jmpsa.dart`](tool/harvest_jmpsa.dart) で全47都道府県の一覧を取得し、
   [`tool/enrich_displacement.dart`](tool/enrich_displacement.dart) で絞り込み用の排気量範囲を付与して生成します。
   ```bash
-  dart run tool/harvest_jmpsa.dart        # 全47都道府県の一覧を取得（約20分）
+  dart run tool/harvest_jmpsa.dart        # 全47都道府県の一覧を取得（約20〜40分）
   dart run tool/enrich_displacement.dart  # 絞り込み用の排気量範囲を付与
   ```
 - 起動時にバックグラウンド isolate で読み込み、地図には**表示領域内・ズーム13以上・最大50件**のみ描画します。

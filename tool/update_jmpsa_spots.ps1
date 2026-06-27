@@ -108,7 +108,7 @@ if (-not $SkipPubGet) {
 }
 
 # --- STEP 1: 一覧ハーベスト(約20分) ---
-Log 'STEP 1: harvest_jmpsa.dart (全47都道府県の一覧取得, 約20分) ...'
+Log 'STEP 1: harvest_jmpsa.dart (全47都道府県の一覧取得, 約20〜40分) ...'
 if ((Invoke-Step $dart @('run', 'tool/harvest_jmpsa.dart')) -ne 0) {
   Fail "harvest_jmpsa.dart failed (exit $LASTEXITCODE)"
 }
