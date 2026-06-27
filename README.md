@@ -57,7 +57,7 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
   [`tool/harvest_jmpsa.dart`](tool/harvest_jmpsa.dart) で全47都道府県の一覧を取得し、
   [`tool/enrich_displacement.dart`](tool/enrich_displacement.dart) で絞り込み用の排気量範囲を付与して生成します。
   ```bash
-  dart run tool/harvest_jmpsa.dart        # 全47都道府県の一覧を取得（約20〜40分）
+  dart run tool/harvest_jmpsa.dart        # 全47都道府県の一覧を取得（約20分）
   dart run tool/enrich_displacement.dart  # 絞り込み用の排気量範囲を付与
   ```
 - 起動時にバックグラウンド isolate で読み込み、地図には**表示領域内・ズーム13以上・最大50件**のみ描画します。
@@ -66,22 +66,6 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
   スポットを開いたときに詳細ページから**遅延取得**して表示します（同梱データを肥大化させない）。
   全件をオフライン用に焼き込みたい場合は [`tool/enrich_details.dart`](tool/enrich_details.dart) を使えます（任意）。
 - ユーザーが追加・通報した分は端末内（SharedPreferences）に保存します（ログイン不要）。
-
-### データの定期更新（半年に1回）
-
-同梱データを最新化するバッチを用意しています。`harvest → enrich_displacement` を実行し、
-更新前にバックアップ・更新後に件数検証（不正ならバックアップへ自動復元）まで行います。
-
-```powershell
-# 手動実行（即時更新）
-powershell -NoProfile -ExecutionPolicy Bypass -File tool\update_jmpsa_spots.ps1
-
-# 半年ごと（1月1日・7月1日 03:00）に自動実行するタスクを登録（管理者PowerShell）
-powershell -NoProfile -ExecutionPolicy Bypass -File tool\register_jmpsa_update_task.ps1
-```
-
-ログは `tool/logs/`、更新前バックアップは `tool/backup/` に出力されます（gitignore 済み）。
-詳細項目もオフライン用に焼き込みたい場合は `-WithDetails` を付けます（時間がかかります）。
 
 > 料金・営業時間等は変動する場合があるため、利用時は現地表示・各サービスをご確認ください。
 
