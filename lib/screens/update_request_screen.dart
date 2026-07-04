@@ -9,22 +9,32 @@ import '../theme/app_theme.dart';
 ///
 /// 当アプリの駐輪場データは提携する情報元および各管理会社が
 /// 掲載・運営している。情報の変更・閉鎖・削除の依頼は、原則として
-/// 管理会社へ直接連絡するか、掲載内容変更フォームから行う。
+/// 管理会社へ直接連絡するか、更新・削除依頼フォームから行う。
 class UpdateRequestScreen extends StatelessWidget {
-  const UpdateRequestScreen({super.key, required this.spot});
+  const UpdateRequestScreen({
+    super.key,
+    required this.spot,
+    String? tel,
+    String? managementCompany,
+  })  : _telOverride = tel,
+        _companyOverride = managementCompany;
 
   final ParkingSpot spot;
+  // 詳細画面で遅延取得した連絡先(同梱データには焼き込まれていないため引き継ぐ)。
+  final String? _telOverride;
+  final String? _companyOverride;
 
-  // 「掲載依頼・掲載内容の変更」窓口。
-  static const _changeFormUrl = 'https://www.jmpsa.or.jp/contact/form/index_18.html';
+  // 掲載情報の更新・削除依頼フォーム(Google フォーム)。
+  static const _changeFormUrl =
+      'https://docs.google.com/forms/d/e/1FAIpQLSc_Hzsky94G4z6XbfXz1lHorXdsilfK76HfIWsNs9fGaIrlcA/viewform?usp=dialog';
 
   Future<void> _open(String url) =>
       launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 
   @override
   Widget build(BuildContext context) {
-    final tel = spot.tel;
-    final company = spot.managementCompany;
+    final tel = _telOverride ?? spot.tel;
+    final company = _companyOverride ?? spot.managementCompany;
 
     return Scaffold(
       appBar: AppBar(title: const Text('更新・削除依頼')),
@@ -85,8 +95,8 @@ class UpdateRequestScreen extends StatelessWidget {
           const _SectionTitle(icon: Icons.mark_email_read_outlined, text: '② 運営窓口から依頼する'),
           const SizedBox(height: 8),
           const Text(
-            '掲載内容の変更・駐輪場の削除(閉鎖)依頼は、「掲載依頼・掲載内容の変更」'
-            'フォームから受け付けています。',
+            '掲載内容の変更・駐輪場の削除(閉鎖)依頼は、更新・削除依頼フォーム'
+            'から受け付けています。',
             style: TextStyle(height: 1.5),
           ),
           const SizedBox(height: 12),

@@ -99,9 +99,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # 初回起動時に読み込むサンプル駐輪場データ
   assets:
-    - assets/seed_spots.json
     # 一括取得した全国の時間貸し駐輪場データ(tool/harvest_jmpsa.dartで生成)
     - assets/jmpsa_spots.json
 

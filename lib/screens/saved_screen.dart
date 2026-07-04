@@ -44,7 +44,9 @@ class _SavedScreenState extends State<SavedScreen> {
   @override
   Widget build(BuildContext context) {
     final prefs = context.watch<UserPreferences>();
-    final index = _index;
+    // ライブ取得でしか得られないスポット(同梱データに無いID)は、
+    // 登録時にキャッシュした本体で解決する(同梱・ユーザー登録分を優先)。
+    final index = _index == null ? null : {...prefs.cachedSpots, ..._index!};
 
     return DefaultTabController(
       length: 2,
