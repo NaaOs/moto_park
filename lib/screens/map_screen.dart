@@ -50,6 +50,7 @@ class _MapScreenState extends State<MapScreen> {
   final _locationService = LocationService();
   final _jmpsaService = JmpsaParkingService();
   late final JmpsaDataset _dataset; // Provider から取得する共有インスタンス
+  late final SpotRepository _repo; // 通報による非表示判定にも使う
 
   StreamSubscription<LatLng>? _positionSub;
   LatLng? _currentLocation;
@@ -62,6 +63,8 @@ class _MapScreenState extends State<MapScreen> {
   List<ParkingSpot> _liveSpots = [];
   bool _loadingJmpsa = false;
   LatLng? _jmpsaFetchedAround;
+  // 取得中に届いた新しい取得要求(現在地確定など)。取得完了後に改めて処理する。
+  LatLng? _pendingJmpsaFetch;
 
   // 同梱の全国データ(4〜5万件)。読み取り専用でメモリ保持する。
   List<ParkingSpot> _datasetSpots = const [];
@@ -82,6 +85,7 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _dataset = context.read<JmpsaDataset>();
+    _repo = context.read<SpotRepository>();
     _initLocation();
     _loadDataset();
     _loadJmpsaSpots(_defaultCenter);
@@ -130,7 +134,12 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _loadJmpsaSpots(LatLng around) async {
     final last = _jmpsaFetchedAround;
     if (last != null && _distanceMeters(last, around) < 3000) return;
-    if (_loadingJmpsa) return;
+    if (_loadingJmpsa) {
+      // 取得中(起動直後の既定地点の取得など)は要求を保留し、完了後に処理する。
+      // 捨ててしまうと、現在地確定時の周辺取得がスキップされたままになる。
+      _pendingJmpsaFetch = around;
+      return;
+    }
     setState(() => _loadingJmpsa = true);
     final spots = await _jmpsaService.fetchNearby(
       latitude: around.latitude,
@@ -139,9 +148,16 @@ class _MapScreenState extends State<MapScreen> {
     if (!mounted) return;
     setState(() {
       _loadingJmpsa = false;
-      _jmpsaFetchedAround = around;
-      if (spots.isNotEmpty) _liveSpots = spots;
+      // 取得済み地点は成功時のみ更新する(失敗時にも更新すると、3km以内の
+      // 同じ場所では二度と再試行されなくなるため)。
+      if (spots.isNotEmpty) {
+        _jmpsaFetchedAround = around;
+        _liveSpots = spots;
+      }
     });
+    final pending = _pendingJmpsaFetch;
+    _pendingJmpsaFetch = null;
+    if (pending != null) await _loadJmpsaSpots(pending);
   }
 
   double _distanceMeters(LatLng a, LatLng b) {
@@ -188,6 +204,9 @@ class _MapScreenState extends State<MapScreen> {
       if (_filter.matches(s)) near[s.id] = s;
     }
     for (final s in _liveSpots) {
+      // リポジトリ由来(repoSpots)は購読時に非表示除外済み。ライブ・同梱データは
+      // ここで通報による非表示を除外する。
+      if (_repo.isHidden(s.id)) continue;
       if (_filter.matches(s)) near[s.id] = s;
     }
     final total = _datasetSpots.length + near.length;
@@ -209,6 +228,7 @@ class _MapScreenState extends State<MapScreen> {
       if (visible.length >= _maxMarkers) break;
       if (near.containsKey(s.id)) continue;
       if (!_inViewport(s)) continue;
+      if (_repo.isHidden(s.id)) continue;
       if (!_filter.matches(s)) continue;
       visible.add(s);
     }
@@ -269,7 +289,6 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('MotoPark'),
         actions: [
-          // 「管理会社からの情報提供」は一旦非表示(InfoProvisionScreen は残置)。
           IconButton(
             tooltip: '保存した駐輪場',
             icon: const Icon(Icons.favorite_border),
@@ -280,7 +299,7 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
       body: StreamBuilder<List<ParkingSpot>>(
-        stream: context.read<SpotRepository>().watchActiveSpots(),
+        stream: _repo.watchActiveSpots(),
         builder: (context, snapshot) {
           final repoSpots = snapshot.data ?? const <ParkingSpot>[];
           final resolved = _resolveSpots(repoSpots);
@@ -518,6 +537,11 @@ class _TopBar extends StatelessWidget {
   final int filterCount;
   final VoidCallback onTapFilter;
 
+  /// 3桁ごとのカンマ区切り(例: 38809 → 38,809)。intl を持ち込むほどでは
+  /// ないためここで整形する。
+  static String _thousands(int n) =>
+      n.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -537,7 +561,7 @@ class _TopBar extends StatelessWidget {
                 child: Text(
                   filterActive
                       ? '絞り込み中 ($filterCount件) · 表示 $visibleCount 件'
-                      : '全国 $totalCount 件 · 表示中 $visibleCount 件 · タップで絞り込み',
+                      : '全国 ${_thousands(totalCount)} 件 · 表示中 $visibleCount 件 · タップで絞り込み',
                   style: const TextStyle(fontSize: 15),
                 ),
               ),

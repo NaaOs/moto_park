@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/spot_filter.dart';
-import '../theme/app_theme.dart';
 
 /// 詳細条件による絞り込み検索シート。
-/// 「125cc以上可」「屋根あり」「地球ロック可」「アスファルト」「傾斜なし」など
-/// 車にはないライダー特有の条件をワンタップで切り替えられるようにする(グローブ対応UI)。
+/// 排気量・予約の要否といったライダー特有の条件を
+/// ワンタップで切り替えられるようにする(グローブ対応UI)。
 class FilterSheet extends StatefulWidget {
   const FilterSheet({super.key, required this.initial});
 
@@ -117,20 +116,9 @@ class _FilterSheetState extends State<FilterSheet> {
                           );
                         }).toList(),
                       ),
-                      const SizedBox(height: 20),
-                      _SectionLabel('その他の条件'),
-                      _BigSwitchTile(
-                        icon: Icons.roofing,
-                        label: '屋根あり',
-                        value: _filter.roofedOnly,
-                        onChanged: (v) => setState(() => _filter = _filter.copyWith(roofedOnly: v)),
-                      ),
-                      _BigSwitchTile(
-                        icon: Icons.lock_outline,
-                        label: '地球ロック(固定物への施錠)可',
-                        value: _filter.groundLockableOnly,
-                        onChanged: (v) => setState(() => _filter = _filter.copyWith(groundLockableOnly: v)),
-                      ),
+                      // 「屋根あり」「地球ロック可」等の条件は、同梱の全国データに
+                      // 該当情報が無く、ONにすると事実上0件になるため提供しない
+                      // (SpotFilter 側の条件は登録データ向けに残している)。
                     ],
                   ),
                 ),
@@ -181,41 +169,3 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _BigSwitchTile extends StatelessWidget {
-  const _BigSwitchTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => onChanged(!value),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: value ? AppTheme.accent.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: value ? AppTheme.accent : Colors.black12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 26, color: value ? AppTheme.accent : Colors.black54),
-            const SizedBox(width: 14),
-            Expanded(child: Text(label, style: const TextStyle(fontSize: 16))),
-            Switch(value: value, onChanged: onChanged),
-          ],
-        ),
-      ),
-    );
-  }
-}

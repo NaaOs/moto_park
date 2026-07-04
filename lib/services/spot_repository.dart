@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,38 +9,47 @@ import '../models/spot_report.dart';
 
 /// 駐輪場データを端末内(SharedPreferences)に保存するリポジトリ。
 /// 駐輪場の情報は更新頻度が低いため、サーバーを介さずローカルのみで完結させる。
-/// 初回起動時は assets/seed_spots.json のサンプルデータを取り込む。
+///
+/// 通報は同梱データ・ライブ取得分を含む全スポットを対象に、この端末内で
+/// ID単位に記録する(1スポットにつき1回)。「閉鎖」「バイク駐輪場ではない」の
+/// 通報は、その場でこの端末の地図から非表示にする(取り消し可)。
 class SpotRepository {
   SpotRepository(this._prefs) {
     _ready = _load();
   }
 
-  /// 通報がこの件数に達すると自動的に非表示(モデレーション)になる。
-  static const int autoHideReportThreshold = 3;
   static const _storageKey = 'parking_spots_v1';
-  static const _seedAssetPath = 'assets/seed_spots.json';
+  static const _reportsKey = 'spot_reports_v1';
+  static const _hiddenKey = 'hidden_spots_v1';
 
   final SharedPreferences _prefs;
   final _controller = StreamController<List<ParkingSpot>>.broadcast();
   List<ParkingSpot> _spots = [];
+  // 通報済みスポット(ID→通報理由)。乱用防止のため同一スポットへの通報は1回まで。
+  Map<String, String> _reports = {};
+  // 通報によりこの端末で非表示にしたスポットID。
+  Set<String> _hiddenIds = {};
   late final Future<void> _ready;
 
   Future<void> _load() async {
     final raw = _prefs.getString(_storageKey);
     if (raw == null) {
-      _spots = await _loadSeedSpots();
-      await _persist();
+      _spots = [];
     } else {
       final list = jsonDecode(raw) as List;
       _spots = list.map((e) => ParkingSpot.fromJson(e as Map<String, dynamic>)).toList();
+      // 過去バージョンが初回起動時に取り込んでいたサンプルデータ(seed-*)は
+      // 実在しない駐輪場のため、永続化済みのものも起動時に取り除く。
+      final before = _spots.length;
+      _spots.removeWhere((s) => s.id.startsWith('seed-'));
+      if (_spots.length != before) await _persist();
     }
+    final reportsRaw = _prefs.getString(_reportsKey);
+    if (reportsRaw != null) {
+      _reports = (jsonDecode(reportsRaw) as Map).map((k, v) => MapEntry(k as String, v as String));
+    }
+    _hiddenIds = (_prefs.getStringList(_hiddenKey) ?? const []).toSet();
     _emit();
-  }
-
-  Future<List<ParkingSpot>> _loadSeedSpots() async {
-    final raw = await rootBundle.loadString(_seedAssetPath);
-    final list = jsonDecode(raw) as List;
-    return list.map((e) => ParkingSpot.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<void> _persist() {
@@ -49,7 +57,13 @@ class SpotRepository {
     return _prefs.setString(_storageKey, raw);
   }
 
-  bool _isVisible(ParkingSpot s) => s.status == SpotStatus.active && s.pricingType == PricingType.hourly;
+  Future<void> _persistReports() async {
+    await _prefs.setString(_reportsKey, jsonEncode(_reports));
+    await _prefs.setStringList(_hiddenKey, _hiddenIds.toList());
+  }
+
+  bool _isVisible(ParkingSpot s) =>
+      s.status == SpotStatus.active && s.pricingType == PricingType.hourly && !isHidden(s.id);
 
   void _emit() {
     _controller.add(List.unmodifiable(_spots.where(_isVisible)));
@@ -91,27 +105,35 @@ class SpotRepository {
     return id;
   }
 
-  /// ガセ情報・閉鎖済みの通報。一定数を超えると自動的に非表示にする。
-  Future<void> reportSpot({
+  /// このスポットを通報済みか(同一スポットへの通報は1回まで)。
+  bool hasReported(String spotId) => _reports.containsKey(spotId);
+
+  /// 通報によりこの端末で非表示になっているか。同梱データ・ライブ取得分にも効く。
+  bool isHidden(String spotId) => _hiddenIds.contains(spotId);
+
+  /// ガセ情報・閉鎖済みの通報。同梱データ・ライブ取得分を含む全スポットが対象。
+  /// 「閉鎖」「バイク駐輪場ではない」はこの端末の地図から即時に非表示にする。
+  Future<ReportOutcome> reportSpot({
     required String spotId,
     required ReportReason reason,
-    String? comment,
   }) async {
-    await _updateSpot(spotId, (spot) {
-      final nextCount = spot.reportCount + 1;
-      return spot.copyWith(
-        reportCount: nextCount,
-        status: nextCount >= autoHideReportThreshold ? SpotStatus.hidden : spot.status,
-      );
-    });
+    await _ready;
+    if (hasReported(spotId)) return ReportOutcome.alreadyReported;
+    _reports[spotId] = reason.name;
+    final shouldHide =
+        reason == ReportReason.closed || reason == ReportReason.notMotorcycleParking;
+    if (shouldHide) _hiddenIds.add(spotId);
+    await _persistReports();
+    _emit();
+    return shouldHide ? ReportOutcome.hidden : ReportOutcome.recorded;
   }
 
-  Future<void> _updateSpot(String spotId, ParkingSpot Function(ParkingSpot) update) async {
+  /// 通報による非表示を取り消す(通報記録ごと戻す)。SnackBarの「元に戻す」用。
+  Future<void> undoReport(String spotId) async {
     await _ready;
-    final idx = _spots.indexWhere((s) => s.id == spotId);
-    if (idx == -1) return;
-    _spots[idx] = update(_spots[idx]);
-    await _persist();
+    _reports.remove(spotId);
+    _hiddenIds.remove(spotId);
+    await _persistReports();
     _emit();
   }
 }

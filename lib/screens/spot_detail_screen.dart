@@ -13,10 +13,7 @@ import '../services/navigation_launcher.dart';
 import '../services/spot_repository.dart';
 import '../services/user_preferences.dart';
 import '../theme/app_theme.dart';
-
-// 掲載情報の更新・削除依頼フォーム(Google フォーム)。
-const _updateRequestFormUrl =
-    'https://docs.google.com/forms/d/e/1FAIpQLSc_Hzsky94G4z6XbfXz1lHorXdsilfK76HfIWsNs9fGaIrlcA/viewform?usp=dialog';
+import 'update_request_screen.dart';
 
 /// 駐輪場の詳細画面。
 /// 料金・対応条件・経路案内連携・進入路ストリートビュー・通報をここに集約する。
@@ -48,7 +45,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     _loadDetailIfJmpsa();
     // 「最近見た」に記録する(build後にProvider更新するためマイクロタスクで)。
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<UserPreferences>().addRecent(spot.id);
+      if (mounted) context.read<UserPreferences>().addRecent(spot);
     });
   }
 
@@ -106,7 +103,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             tooltip: isFav ? 'お気に入りから削除' : 'お気に入りに追加',
             icon: Icon(isFav ? Icons.favorite : Icons.favorite_border,
                 color: isFav ? Colors.redAccent : null),
-            onPressed: () => prefs.toggleFavorite(spot.id),
+            onPressed: () => prefs.toggleFavorite(spot),
           ),
           IconButton(
             tooltip: '共有',
@@ -167,10 +164,18 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             child: ListTile(
               leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
               title: const Text('掲載情報の更新・削除依頼'),
-              subtitle: const Text('フォームから掲載内容の変更・削除を依頼できます'),
-              trailing: const Icon(Icons.open_in_new),
-              onTap: () => launchUrl(Uri.parse(_updateRequestFormUrl),
-                  mode: LaunchMode.externalApplication),
+              subtitle: const Text('管理会社への連絡先や依頼フォームを案内します'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => UpdateRequestScreen(
+                    spot: spot,
+                    // 遅延取得済みの詳細(TEL・管理会社)があれば連絡先として引き継ぐ。
+                    tel: _detail?.tel,
+                    managementCompany: _detail?.managementCompany,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -304,6 +309,12 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   }
 
   Future<void> _showReportDialog(BuildContext context, SpotRepository repo) async {
+    if (repo.hasReported(spot.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('この駐輪場はすでに通報済みです。')),
+      );
+      return;
+    }
     final reason = await showDialog<ReportReason>(
       context: context,
       builder: (ctx) => SimpleDialog(
@@ -320,11 +331,27 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
       ),
     );
     if (reason == null || !context.mounted) return;
-    await repo.reportSpot(spotId: spot.id, reason: reason);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('通報を受け付けました。ご協力ありがとうございます。')),
-      );
+    final outcome = await repo.reportSpot(spotId: spot.id, reason: reason);
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    switch (outcome) {
+      case ReportOutcome.hidden:
+        messenger.showSnackBar(SnackBar(
+          content: const Text('通報を受け付けました。この駐輪場を地図に表示しないようにします。'),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: '元に戻す',
+            onPressed: () => repo.undoReport(spot.id),
+          ),
+        ));
+      case ReportOutcome.recorded:
+        messenger.showSnackBar(const SnackBar(
+          content: Text('通報を記録しました。掲載内容の修正は「掲載情報の更新・削除依頼」からも依頼できます。'),
+        ));
+      case ReportOutcome.alreadyReported:
+        messenger.showSnackBar(const SnackBar(
+          content: Text('この駐輪場はすでに通報済みです。'),
+        ));
     }
   }
 }

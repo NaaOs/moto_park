@@ -47,8 +47,11 @@
        APIキーはリポジトリに含めず、ビルド時に __GOOGLE_MAPS_API_KEY__ を
        実際のキーへ置換して注入する(GitHub Actions が Secrets から差し込む)。
        ローカルでWeb版を試す場合は、このプレースホルダを一時的に自分のキーへ
-       書き換える(コミットはしないこと)。 -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=__GOOGLE_MAPS_API_KEY__"></script>
+       書き換える(コミットはしないこと)。
+       ※ defer でHTMLパースをブロックしない。推奨の loading=async(動的
+         ライブラリ読み込み)は google_maps_flutter_web 0.6.x が未対応
+         (google.maps.* を直接参照する)ため、対応後に切り替えること。 -->
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=__GOOGLE_MAPS_API_KEY__"></script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VMGXNWNWCJ"></script>
   <script>
