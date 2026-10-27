@@ -157,27 +157,31 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
           // ページ最下部に外部リンク(掲載元ページ・更新/削除依頼)をまとめる。
           if (spot.infoUrl != null) ...[
             const SizedBox(height: 16),
-            _ReferenceCard(url: spot.infoUrl!),
+            _ReferenceCard(url: spot.infoUrl!, source: spot.isCommercial ? spot.dataSource : null),
           ],
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
-              title: const Text('掲載情報の更新・削除依頼'),
-              subtitle: const Text('管理会社への連絡先や依頼フォームを案内します'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => UpdateRequestScreen(
-                    spot: spot,
-                    // 遅延取得済みの詳細(TEL・管理会社)があれば連絡先として引き継ぐ。
-                    tel: _detail?.tel,
-                    managementCompany: _detail?.managementCompany,
+          // 更新・削除依頼フォームは提携データ向けの窓口のため、商業施設のデータには出さない
+          // (商業施設は上の参照リンク先=施設公式サイト/OpenStreetMap で確認・修正する)。
+          if (!spot.isCommercial) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.edit_note, size: 30, color: AppTheme.accent),
+                title: const Text('掲載情報の更新・削除依頼'),
+                subtitle: const Text('管理会社への連絡先や依頼フォームを案内します'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => UpdateRequestScreen(
+                      spot: spot,
+                      // 遅延取得済みの詳細(TEL・管理会社)があれば連絡先として引き継ぐ。
+                      tel: _detail?.tel,
+                      managementCompany: _detail?.managementCompany,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -257,7 +261,11 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                       point: point,
                       width: 40,
                       height: 40,
-                      child: const Icon(Icons.location_pin, color: AppTheme.accent, size: 40),
+                      child: Icon(
+                        Icons.location_pin,
+                        color: spot.isCommercial ? AppTheme.commercial : AppTheme.accent,
+                        size: 40,
+                      ),
                     ),
                   ],
                 ),
@@ -366,14 +374,18 @@ class _JmpsaDetailCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = <({IconData icon, String label, String? value})>[
+      (icon: Icons.storefront_outlined, label: '施設名', value: detail.facilityName),
+      (icon: Icons.pin_drop_outlined, label: '置場の場所', value: detail.bikeLocation),
       (icon: Icons.two_wheeler, label: 'バイク種別', value: detail.bikeType),
       (icon: Icons.do_not_disturb_on_outlined, label: '車両制限', value: detail.vehicleRestriction),
       (icon: Icons.local_parking, label: '駐車場形態', value: detail.parkingType),
       (icon: Icons.schedule, label: '利用可能時間', value: detail.availableHours),
       (icon: Icons.confirmation_number_outlined, label: '収容台数', value: detail.capacity),
+      (icon: Icons.roofing_outlined, label: '屋根', value: detail.roof),
       (icon: Icons.call_outlined, label: 'TEL', value: detail.tel),
       (icon: Icons.business_outlined, label: '管理会社', value: detail.managementCompany),
       (icon: Icons.update_outlined, label: '最終更新日', value: detail.lastUpdated),
+      (icon: Icons.info_outline, label: '情報源', value: detail.dataSource),
     ].where((r) => r.value != null && r.value!.isNotEmpty).toList();
 
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -547,16 +559,26 @@ class _StreetViewCard extends StatelessWidget {
 }
 
 class _ReferenceCard extends StatelessWidget {
-  const _ReferenceCard({required this.url});
+  const _ReferenceCard({required this.url, this.source});
   final String url;
+  // 商業施設データの情報源(施設公式サイト / OpenStreetMap)。null は提携データ。
+  final String? source;
 
   @override
   Widget build(BuildContext context) {
+    final (title, subtitle) = switch (source) {
+      'OpenStreetMap' => (
+          'OpenStreetMap で確認・修正',
+          '地図データ © OpenStreetMap contributors (ODbL)。料金・利用条件は現地でご確認ください',
+        ),
+      String() => ('施設の公式案内を確認', '料金・利用時間は現状と異なる場合があります'),
+      null => ('最新の駐車場情報を確認', '料金・営業時間は現状と異なる場合があります'),
+    };
     return Card(
       child: ListTile(
         leading: const Icon(Icons.fact_check_outlined, size: 30, color: AppTheme.accent),
-        title: const Text('最新の駐車場情報を確認'),
-        subtitle: const Text('料金・営業時間は現状と異なる場合があります'),
+        title: Text(title),
+        subtitle: Text(subtitle),
         trailing: const Icon(Icons.open_in_new),
         onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
       ),

@@ -277,6 +277,18 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  /// ピンの色(Google Maps 用の色相)。商業施設=青 / 時間貸し駐輪場=オレンジ / ユーザー登録=紫。
+  static double _markerHue(ParkingSpot spot) {
+    if (spot.isCommercial) return BitmapDescriptor.hueAzure;
+    return spot.official ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueViolet;
+  }
+
+  /// ピンの色(flutter_map 用)。_markerHue と同じ区分。
+  static Color _markerColor(ParkingSpot spot) {
+    if (spot.isCommercial) return AppTheme.commercial;
+    return spot.official ? AppTheme.accent : AppTheme.userSpot;
+  }
+
   void _openDetail(ParkingSpot spot) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => SpotDetailScreen(spot: spot)),
@@ -360,6 +372,12 @@ class _MapScreenState extends State<MapScreen> {
                           right: 0,
                           child: Center(child: _LoadingPill(text: '最新情報を取得中…')),
                         ),
+                      // ピン色の凡例(駐輪場と商業施設を見分けられるようにする)。
+                      const Positioned(
+                        bottom: 16,
+                        left: 8,
+                        child: _Legend(),
+                      ),
                       Positioned(
                         bottom: 16,
                         right: 8,
@@ -422,9 +440,7 @@ class _MapScreenState extends State<MapScreen> {
               .map((spot) => Marker(
                     markerId: MarkerId(spot.id),
                     position: LatLng(spot.latitude, spot.longitude),
-                    icon: BitmapDescriptor.defaultMarkerWithHue(
-                      spot.official ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueViolet,
-                    ),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(_markerHue(spot)),
                     infoWindow: InfoWindow(title: spot.name, snippet: spot.feeDescription),
                     onTap: () => _openDetail(spot),
                   ))
@@ -468,7 +484,7 @@ class _MapScreenState extends State<MapScreen> {
         ),
         fmap.MarkerLayer(
           markers: spots.map((spot) {
-            final color = spot.official ? AppTheme.accent : Colors.purple;
+            final color = _markerColor(spot);
             return fmap.Marker(
               point: ll.LatLng(spot.latitude, spot.longitude),
               width: 40,
@@ -595,6 +611,49 @@ class _LoadingPill extends StatelessWidget {
           Text(text),
         ],
       ),
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _LegendRow(color: AppTheme.accent, label: '駐輪場(時間貸し)'),
+          SizedBox(height: 4),
+          _LegendRow(color: AppTheme.commercial, label: '商業施設の駐輪場'),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendRow extends StatelessWidget {
+  const _LegendRow({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.location_pin, color: color, size: 18),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+      ],
     );
   }
 }

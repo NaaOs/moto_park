@@ -5,7 +5,8 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/parking_spot.dart';
 
-/// harvest 済みの全国駐輪場データ(assets/jmpsa_spots.json)を
+/// harvest 済みの全国駐輪場データ(assets/jmpsa_spots.json)と、
+/// 商業施設併設のバイク駐輪場データ(assets/commercial_spots.json)を
 /// 読み取り専用でメモリにロードするデータセット。
 ///
 /// 約3.9万件・24MB規模のため SharedPreferences には保存せず、起動時に
@@ -14,6 +15,8 @@ import '../models/parking_spot.dart';
 /// 地図表示は MapScreen 側でビューポート内に絞り込む。
 class JmpsaDataset {
   static const _assetPath = 'assets/jmpsa_spots.json';
+  // tool/harvest_commercial.py で生成(OpenStreetMap + 各施設の公式サイト)。
+  static const _commercialAssetPath = 'assets/commercial_spots.json';
 
   List<ParkingSpot>? _cache;
   Future<List<ParkingSpot>>? _loading;
@@ -26,13 +29,21 @@ class JmpsaDataset {
   }
 
   Future<List<ParkingSpot>> _load() async {
+    // 片方のアセットが壊れていても、もう片方は表示できるよう個別に読み込む。
+    final results = await Future.wait([
+      _loadAsset(_assetPath),
+      _loadAsset(_commercialAssetPath),
+    ]);
+    final spots = List<ParkingSpot>.unmodifiable(results.expand((e) => e));
+    _cache = spots;
+    return spots;
+  }
+
+  Future<List<ParkingSpot>> _loadAsset(String path) async {
     try {
-      final raw = await rootBundle.loadString(_assetPath);
-      final spots = await compute(_parseSpots, raw);
-      _cache = spots;
-      return spots;
+      final raw = await rootBundle.loadString(path);
+      return await compute(_parseSpots, raw);
     } catch (_) {
-      _cache = const [];
       return const [];
     }
   }

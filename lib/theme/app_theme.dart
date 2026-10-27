@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 /// 屋外での視認性を優先した明るいテーマ。
 class AppTheme {
   static const Color accent = Color(0xFFFF7A29);
+  // 商業施設併設の駐輪場のピン色(Google Maps の hueAzure に近い青)。
+  static const Color commercial = Color(0xFF1E88E5);
+  // ユーザー登録(非公式)スポットのピン色。
+  static const Color userSpot = Colors.purple;
   static const Color background = Color(0xFFF4F5F7);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color chipBackground = Color(0xFFEFF1F4);
