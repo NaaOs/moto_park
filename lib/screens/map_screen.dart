@@ -372,12 +372,6 @@ class _MapScreenState extends State<MapScreen> {
                           right: 0,
                           child: Center(child: _LoadingPill(text: '最新情報を取得中…')),
                         ),
-                      // ピン色の凡例(駐輪場と商業施設を見分けられるようにする)。
-                      const Positioned(
-                        bottom: 16,
-                        left: 8,
-                        child: _Legend(),
-                      ),
                       Positioned(
                         bottom: 16,
                         right: 8,
@@ -611,49 +605,6 @@ class _LoadingPill extends StatelessWidget {
           Text(text),
         ],
       ),
-    );
-  }
-}
-
-class _Legend extends StatelessWidget {
-  const _Legend();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _LegendRow(color: AppTheme.accent, label: '駐輪場(時間貸し)'),
-          SizedBox(height: 4),
-          _LegendRow(color: AppTheme.commercial, label: '商業施設の駐輪場'),
-        ],
-      ),
-    );
-  }
-}
-
-class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.location_pin, color: color, size: 18),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.black87)),
-      ],
     );
   }
 }
