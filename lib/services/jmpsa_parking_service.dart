@@ -38,6 +38,11 @@ class JmpsaSpotDetail {
   String? get hourlyFee => info['料金（時間貸）'];
   String? get managementCompany => info['管理会社'];
   String? get lastUpdated => info['最終更新日'];
+  // 商業施設併設データ(assets/commercial_spots.json)の項目
+  String? get facilityName => info['施設名'];
+  String? get bikeLocation => info['バイク置場の場所'];
+  String? get roof => info['屋根'];
+  String? get dataSource => info['情報源'];
 
   bool get isEmpty =>
       remarks.isEmpty && reservationUrl == null && photoUrls.isEmpty && info.isEmpty;

@@ -21,7 +21,8 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
 
 - 🗺️ **全国 38,799 件の駐輪場を地図表示** — 時間貸し駐輪場の全国データを同梱
 - 📍 **現在地から探せる** — 起動時に現在地へ移動、周辺の最新情報も動的取得
-- 🔎 **ライダー向けの絞り込み** — 予約の要否 / 排気量
+- 🏬 **商業施設のバイク駐輪場も表示** — ショッピングモール・スーパー・ホームセンター等に併設された駐輪場を青いピンで表示
+- 🔎 **ライダー向けの絞り込み** — 予約の要否 / 排気量 / 施設の種類（駐輪場・商業施設）
 - 🅿️ **予約制スポットに対応** — 詳細画面で備考・写真・予約サイトへのリンクを表示
 - 📋 **充実した駐輪場情報** — 所在地・TEL・駐車場形態・利用可能時間・料金・収容台数・車両制限・バイク種別・管理会社・最終更新日を表示
 - ✏️ **更新・削除依頼 / 情報提供** — 掲載内容の変更依頼や、管理会社からの情報提供の窓口を案内
@@ -65,6 +66,20 @@ MotoPark は、ライダーが出先で**バイクを停められる時間貸し
   TEL・駐車場形態・利用可能時間・料金・収容台数・車両制限・バイク種別・管理会社・最終更新日・備考・予約URL・写真は、
   スポットを開いたときに詳細ページから**遅延取得**して表示します（同梱データを肥大化させない）。
   全件をオフライン用に焼き込みたい場合は [`tool/enrich_details.dart`](tool/enrich_details.dart) を使えます（任意）。
+- 商業施設併設のバイク駐輪場 [`assets/commercial_spots.json`](assets/commercial_spots.json) は
+  [`tool/harvest_commercial.py`](tool/harvest_commercial.py) で生成します。
+  - **OpenStreetMap**（Overpass API）からバイク駐輪場（`amenity=motorcycle_parking`）と商業施設の範囲を取得し、
+    施設の敷地内にあるもの・施設近くで「顧客用」と明示されたものを採用します（駅前・公営・コインパーキング系は除外）。
+  - **各施設の公式サイト**で料金・台数・利用時間を確認できた施設は
+    [`tool/commercial_curated.json`](tool/commercial_curated.json) に記載し、OSM の同一施設分より優先します。
+  - 住所は Nominatim の逆ジオコーディングで補完します（1リクエスト/秒）。
+  - 最後に施設名で **Google マップ**を検索し、見つかった施設の座標・住所に置き換えます
+    （現在の位置から1.5km以内、または施設名が一致する結果のみ採用。支店名のないチェーン店など特定できない施設は元の位置のまま）。
+  ```bash
+  python tool/harvest_commercial.py            # 取得結果は tool/backup/commercial_cache にキャッシュ
+  python tool/harvest_commercial.py --refresh  # 取り直す
+  ```
+  > 地図データ © OpenStreetMap contributors（[ODbL](https://opendatacommons.org/licenses/odbl/)）
 - ユーザーが追加・通報した分は端末内（SharedPreferences）に保存します（ログイン不要）。
 
 > 料金・営業時間等は変動する場合があるため、利用時は現地表示・各サービスをご確認ください。
@@ -131,10 +146,13 @@ lib/
   widgets/       絞り込みシート 等
 assets/
   jmpsa_spots.json   同梱の全国データ(harvest生成)
+  commercial_spots.json  商業施設併設のバイク駐輪場(harvest_commercial.py生成)
   icon/              アプリアイコン素材
 tool/
   harvest_jmpsa.dart   全国データ一覧の一括取得スクリプト
   enrich_details.dart  全件の詳細項目を取得して焼き込むスクリプト
+  harvest_commercial.py  商業施設併設のバイク駐輪場を収集するスクリプト
+  commercial_curated.json  公式サイトで確認した商業施設の駐輪場情報
 cloudflare-worker/
   jmpsa-proxy.js     Web公開用のCORSプロキシ
 ```

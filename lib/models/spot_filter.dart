@@ -11,6 +11,8 @@ class SpotFilter {
   final bool flatOnly;
   // 予約の要否。null=指定なし / true=予約制のみ / false=予約不要のみ
   final bool? requiresReservation;
+  // 施設の種類。null=指定なし / parking=駐輪場のみ / commercial=商業施設のみ
+  final SpotSource? source;
 
   const SpotFilter({
     this.minDisplacementCc,
@@ -19,6 +21,7 @@ class SpotFilter {
     this.surface,
     this.flatOnly = false,
     this.requiresReservation,
+    this.source,
   });
 
   bool get isActive =>
@@ -27,7 +30,8 @@ class SpotFilter {
       groundLockableOnly ||
       surface != null ||
       flatOnly ||
-      requiresReservation != null;
+      requiresReservation != null ||
+      source != null;
 
   int get activeCount => [
         minDisplacementCc != null,
@@ -36,6 +40,7 @@ class SpotFilter {
         surface != null,
         flatOnly,
         requiresReservation != null,
+        source != null,
       ].where((v) => v).length;
 
   bool matches(ParkingSpot spot) {
@@ -49,6 +54,7 @@ class SpotFilter {
     if (requiresReservation != null && spot.requiresReservation != requiresReservation) {
       return false;
     }
+    if (source != null && spot.source != source) return false;
     return true;
   }
 
@@ -62,6 +68,8 @@ class SpotFilter {
     bool? flatOnly,
     bool? requiresReservation,
     bool clearRequiresReservation = false,
+    SpotSource? source,
+    bool clearSource = false,
   }) {
     return SpotFilter(
       minDisplacementCc: clearMinDisplacementCc ? null : (minDisplacementCc ?? this.minDisplacementCc),
@@ -71,6 +79,7 @@ class SpotFilter {
       flatOnly: flatOnly ?? this.flatOnly,
       requiresReservation:
           clearRequiresReservation ? null : (requiresReservation ?? this.requiresReservation),
+      source: clearSource ? null : (source ?? this.source),
     );
   }
 }

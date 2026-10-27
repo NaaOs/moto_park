@@ -8,6 +8,11 @@ enum PricingType { hourly, monthly }
 /// モデレーション状態。報告が一定数を超えると自動的に非表示になる。
 enum SpotStatus { active, hidden }
 
+/// データの種別。地図のピン色・絞り込みの区分に使う。
+/// - parking: 時間貸しの駐輪場(提携データ・ユーザー登録)
+/// - commercial: 商業施設(ショッピングモール・スーパー等)に併設されたバイク駐輪場
+enum SpotSource { parking, commercial }
+
 GroundSurface surfaceFromString(String? value) {
   switch (value) {
     case 'asphalt':
@@ -191,6 +196,11 @@ class ParkingSpot {
   /// 始まるため、名称から判定する(akippa・特P・いつでもニリーン等)。
   bool get requiresReservation => name.contains('予約制');
 
+  /// 商業施設併設のバイク駐輪場(tool/harvest_commercial.py で生成)か。
+  bool get isCommercial => createdBy == 'commercial';
+
+  SpotSource get source => isCommercial ? SpotSource.commercial : SpotSource.parking;
+
   // ── 詳細項目へのアクセサ(無ければ null) ──
   String? get tel => _detail('TEL');
   String? get parkingType => _detail('駐車場形態'); // 駐車場形態(時間貸 等)
@@ -201,6 +211,9 @@ class ParkingSpot {
   String? get bikeType => _detail('バイク種別'); // 対応するバイクのサイズ区分
   String? get managementCompany => _detail('管理会社');
   String? get lastUpdated => _detail('最終更新日');
+  // 商業施設併設データの項目
+  String? get facilityName => _detail('施設名');
+  String? get dataSource => _detail('情報源'); // 施設公式サイト / OpenStreetMap
 
   /// 焼き込み済みの詳細情報を持っているか(詳細カードの表示判定に使う)。
   bool get hasDetails => details.isNotEmpty || remarks.isNotEmpty || reservationUrl != null;

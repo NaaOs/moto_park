@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../models/parking_spot.dart';
 import '../models/spot_filter.dart';
 
 /// 詳細条件による絞り込み検索シート。
-/// 排気量・予約の要否といったライダー特有の条件を
+/// 排気量・予約の要否・施設の種類といったライダー特有の条件を
 /// ワンタップで切り替えられるようにする(グローブ対応UI)。
 class FilterSheet extends StatefulWidget {
   const FilterSheet({super.key, required this.initial});
@@ -111,6 +112,29 @@ class _FilterSheetState extends State<FilterSheet> {
                               _filter = _filter.copyWith(
                                 requiresReservation: opt.value,
                                 clearRequiresReservation: opt.value == null,
+                              );
+                            }),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+                      _SectionLabel('施設の種類'),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          (label: '指定なし', value: null),
+                          (label: '駐輪場のみ', value: SpotSource.parking),
+                          (label: '商業施設のみ', value: SpotSource.commercial),
+                        ].map((opt) {
+                          final selected = _filter.source == opt.value;
+                          return ChoiceChip(
+                            label: Text(opt.label),
+                            selected: selected,
+                            onSelected: (_) => setState(() {
+                              _filter = _filter.copyWith(
+                                source: opt.value,
+                                clearSource: opt.value == null,
                               );
                             }),
                           );

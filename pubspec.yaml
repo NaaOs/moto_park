@@ -102,6 +102,8 @@ flutter:
   assets:
     # 一括取得した全国の時間貸し駐輪場データ(tool/harvest_jmpsa.dartで生成)
     - assets/jmpsa_spots.json
+    # 商業施設併設のバイク駐輪場データ(tool/harvest_commercial.pyで生成)
+    - assets/commercial_spots.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
